@@ -63,9 +63,9 @@
         two function methods for inserting and extracting heap elements.
 -->
 
-<!--  you will want to uncomment this tag
+
 <script src="heap.js"></script>
--->
+
  
 
 <!--
@@ -96,7 +96,7 @@ function startMeUp () {
 
     // alert will pop up a dialog box with text that will pause execution
     //   until the appropriate user action is taken
-        alert("woo haa");  // you will want to comment out this call
+    //    alert("woo haa");  // you will want to comment out this call
  
     // console.log() prints the output of a JavaScript expression to 
     //   the brower's console; and much less distracting than alert
@@ -208,14 +208,15 @@ function startMeUp () {
     // Note: JavaScript allows double and single quotes for containing strings
     for (i=0;i<numbers.length;i++) {
         if (i) {
-            if (numbers_sorted[i-1] > numbers_sorted[i])
+            if (numbers_sorted[i-1] > numbers_sorted[i]){
                 output_string += '<b style="color:red">';
+            }
         }
         output_string += numbers_sorted[i] + " "; // concatenate array element and a space to the output string
         if (i) {
             if (numbers_sorted[i-1] > numbers_sorted[i])
                 output_string += '</b>';
-        }
+            }
     }
     addHTMLLine("output",output_string);
 }
