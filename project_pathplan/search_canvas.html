@@ -146,7 +146,7 @@ function initSearch() {
 
     // initialize graph search algorithms (DFS, BFS, A-star) 
     initSearchGraph();
-
+    // console.log(visit_queue);
     // flag to continue or stop search iterations
     search_iterate = true;
 
@@ -211,8 +211,9 @@ function animate() {
 
     // render the world to the canvas element
     drawRobotWorld();
-
+    
     // make sure the rrt iterations are not running faster than animation update
+
     if (search_iterate && (Date.now()-cur_time > min_msec_between_iterations)) {
 
         // update time marker for last iteration update
@@ -220,12 +221,20 @@ function animate() {
 
         // update iteration count
         search_iter_count++; 
+        
+    
 
         // call iteration for the selected search algorithm
         switch (search_alg) {
             case "depth-first": 
+                search_result = iterateDFS();
+                break;
             case "breadth-first": 
+                search_result = iterateBFS();
+                break;
             case "greedy-best-first": 
+                search_result = iterateGBFS();
+                break;
             case "A-star": 
                 search_result = iterateGraphSearch();
                 break;
@@ -274,8 +283,6 @@ function animate() {
 }
 
 function iterateGraphSearch() {
-
-
     // STENCIL: implement a single iteration of a graph search algorithm
     //   for A-star (or DFS, BFS, Greedy Best-First)
     //   An asynch timing mechanism is used instead of a for loop to avoid 
@@ -287,11 +294,325 @@ function iterateGraphSearch() {
     //
     //   Provided support functions:
     //
-    //   testCollision - returns whether a given configuration is in collision
-    //   drawHighlightedPathGraph - draws a path back to the start location
-    //   draw_2D_configuration - draws a square at a given location 
+    //   testCollision - returns whether a given configuration is in collision. returns a boolean of whether 
+    //       a given 2D location, as a two-element vector, is in collision with the planning scene.
+    //   drawHighlightedPathGraph - draws a path back to the start location. render the path produced by the 
+    //       search algorithm between a given location and the start location. The global variable 
+    //       search_iterate should be set to false to end animation loop.
+    //   draw_2D_configuration - draws a square at a given location. draws a square at a given location 
+    //       in the planning world to indicate that location has been explored
+
+        //console.log(visit_queue);
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+
+    current_node=minheap_extract(visit_queue);
+    current_node.visited=true;
+    current_node.queued=false;
+    search_visited++;
+    if (Math.abs(current_node.x-q_goal[0])<eps&&Math.abs(current_node.y-q_goal[1])<eps){
+        drawHighlightedPathGraph(current_node);
+        search_iterate=false;
+        return "succeeded"
+    }
+    
+    else{  
+        m=Math.round((current_node.x+2)/0.1);
+        n=Math.round((current_node.y+2)/0.1);
+        leftnode=G[m-1][n];
+        // leftnode.x=Math.round(10*leftnode.x)/10;
+        // leftnode.y=Math.round(10*leftnode.y)/10;
+        rightnode=G[m+1][n];
+        // rightnode.x=Math.round(10*leftnode.x)/10-0.000001;
+        // rightnode.y=Math.round(10*leftnode.y)/10-0.000001;
+        upnode=G[m][n-1];
+        downnode=G[m][n+1];
+        if (!testCollision([leftnode.x,leftnode.y])&&!leftnode.visited){
+            if (leftnode.distance>(current_node.distance+eps)){
+                leftnode.parent=current_node;
+                leftnode.distance=current_node.distance+eps;
+                leftnode.priority=leftnode.distance+Math.sqrt(Math.pow((leftnode.x-q_goal[0]),2)+Math.pow((leftnode.y-q_goal[1]),2));
+            }
+            minheap_insert(visit_queue,leftnode);
+            leftnode.visited=true;
+            leftnode.queued=true;
+            draw_2D_configuration([leftnode.x,leftnode.y]);
+        }
+
+        if (!testCollision([upnode.x,upnode.y])&&!upnode.visited){
+            if (upnode.distance>(current_node.distance+eps)){
+                upnode.parent=current_node;
+                upnode.distance=current_node.distance+eps;
+                upnode.priority=upnode.distance+Math.sqrt(Math.pow((upnode.x-q_goal[0]),2)+Math.pow((upnode.y-q_goal[1]),2));
+            }        
+            minheap_insert(visit_queue,upnode);
+            upnode.visited=true;
+            upnode.queued=true;
+            draw_2D_configuration([upnode.x,upnode.y]);
+        }
+
+        if (!testCollision([rightnode.x-0.001,rightnode.y])&&!rightnode.visited){
+            if (rightnode.distance>(current_node.distance+eps)){
+                rightnode.parent=current_node;
+                rightnode.distance=current_node.distance+eps;
+                rightnode.priority=rightnode.distance+Math.sqrt(Math.pow((rightnode.x-q_goal[0]),2)+Math.pow((rightnode.y-q_goal[1]),2));
+            }         
+            minheap_insert(visit_queue,rightnode);
+            rightnode.visited=true;
+            rightnode.queued=true;
+            draw_2D_configuration([rightnode.x,rightnode.y]);
+        } 
+
+        if (!testCollision([downnode.x,downnode.y-0.001])&&!downnode.visited){
+            if (downnode.distance>(current_node.distance+eps)){
+                downnode.parent=current_node;
+                downnode.distance=current_node.distance+eps;
+                downnode.priority=downnode.distance+Math.sqrt(Math.pow((downnode.x-q_goal[0]),2)+Math.pow((downnode.y-q_goal[1]),2));
+            }         
+            minheap_insert(visit_queue,downnode);
+            downnode.visited=true;
+            downnode.queued=true;
+            draw_2D_configuration([downnode.x,downnode.y]);
+        }                      
+        return "iterating"
+    }
+
+
 }
 
+function iterateGBFS() {
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+
+    current_node=minheap_extract(visit_queue);
+    current_node.visited=true;
+    current_node.queued=false;
+    search_visited++;
+    if (Math.abs(current_node.x-q_goal[0])<eps&&Math.abs(current_node.y-q_goal[1])<eps){
+        drawHighlightedPathGraph(current_node);
+        search_iterate=false;
+        return "succeeded"
+    }
+    
+    else{  
+        m=Math.round((current_node.x+2)/0.1);
+        n=Math.round((current_node.y+2)/0.1);
+        leftnode=G[m-1][n];
+        // leftnode.x=Math.round(10*leftnode.x)/10;
+        // leftnode.y=Math.round(10*leftnode.y)/10;
+        rightnode=G[m+1][n];
+        upnode=G[m][n-1];
+        downnode=G[m][n+1];
+        if (!testCollision([leftnode.x,leftnode.y])&&!leftnode.visited){
+            if (leftnode.distance>(current_node.distance+eps)){
+                leftnode.parent=current_node;
+                leftnode.distance=current_node.distance+eps;
+                leftnode.priority=Math.sqrt(Math.pow((leftnode.x-q_goal[0]),2)+Math.pow((leftnode.y-q_goal[1]),2));
+            }
+            minheap_insert(visit_queue,leftnode);
+            leftnode.visited=true;
+            leftnode.queued=true;
+            draw_2D_configuration([leftnode.x,leftnode.y]);
+        }
+
+        if (!testCollision([upnode.x,upnode.y])&&!upnode.visited){
+            if (upnode.distance>(current_node.distance+eps)){
+                upnode.parent=current_node;
+                upnode.distance=current_node.distance+eps;
+                upnode.priority=Math.sqrt(Math.pow((upnode.x-q_goal[0]),2)+Math.pow((upnode.y-q_goal[1]),2));
+            }        
+            minheap_insert(visit_queue,upnode);
+            upnode.visited=true;
+            upnode.queued=true;
+            draw_2D_configuration([upnode.x,upnode.y]);
+        }
+
+        if (!testCollision([rightnode.x-0.001,rightnode.y])&&!rightnode.visited){
+            if (rightnode.distance>(current_node.distance+eps)){
+                rightnode.parent=current_node;
+                rightnode.distance=current_node.distance+eps;
+                rightnode.priority=Math.sqrt(Math.pow((rightnode.x-q_goal[0]),2)+Math.pow((rightnode.y-q_goal[1]),2));
+            }         
+            minheap_insert(visit_queue,rightnode);
+            rightnode.visited=true;
+            rightnode.queued=true;
+            draw_2D_configuration([rightnode.x,rightnode.y]);
+        } 
+
+        if (!testCollision([downnode.x,downnode.y-0.001])&&!downnode.visited){
+            if (downnode.distance>(current_node.distance+eps)){
+                downnode.parent=current_node;
+                downnode.distance=current_node.distance+eps;
+                downnode.priority=Math.sqrt(Math.pow((downnode.x-q_goal[0]),2)+Math.pow((downnode.y-q_goal[1]),2));
+            }         
+            minheap_insert(visit_queue,downnode);
+            downnode.visited=true;
+            downnode.queued=true;
+            draw_2D_configuration([downnode.x,downnode.y]);
+        }                      
+        return "iterating"
+    }
+}
+
+function iterateDFS() {
+    //console.log(visit_queue);
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+
+    current_node=visit_queue.pop();
+    current_node.visited=true;
+    current_node.queued=false;
+    search_visited++;
+    if (Math.abs(current_node.x-q_goal[0])<eps&&Math.abs(current_node.y-q_goal[1])<eps){
+        drawHighlightedPathGraph(current_node);
+        search_iterate=false;
+        return "succeeded"
+    }
+    
+    else{  
+        m=Math.round((current_node.x+2)/0.1);
+        n=Math.round((current_node.y+2)/0.1);
+        leftnode=G[m-1][n];
+        // leftnode.x=Math.round(10*leftnode.x)/10;
+        // leftnode.y=Math.round(10*leftnode.y)/10;
+        rightnode=G[m+1][n];
+        // rightnode.x=Math.round(10*leftnode.x)/10;
+        // rightnode.y=Math.round(10*leftnode.y)/10;
+        upnode=G[m][n-1];
+        downnode=G[m][n+1];
+        if (!testCollision([leftnode.x,leftnode.y])&&!leftnode.visited){
+            visit_queue.push(leftnode);
+            leftnode.visited=true;
+            leftnode.queued=true;
+            draw_2D_configuration([leftnode.x,leftnode.y]);
+            if (leftnode.distance>(current_node.distance+eps)){
+                leftnode.parent=current_node;
+                leftnode.distance=current_node.distance+eps;
+                leftnode.priority=leftnode.distance;
+            }
+        }
+
+        if (!testCollision([upnode.x,upnode.y])&&!upnode.visited){
+            visit_queue.push(upnode);
+            upnode.visited=true;
+            upnode.queued=true;
+            draw_2D_configuration([upnode.x,upnode.y]);
+            if (upnode.distance>(current_node.distance+eps)){
+                upnode.parent=current_node;
+                upnode.distance=current_node.distance+eps;
+                upnode.priority=upnode.distance;
+            }        
+        }
+
+        if (!testCollision([rightnode.x-0.001,rightnode.y])&&!rightnode.visited){
+            visit_queue.push(rightnode);
+            rightnode.visited=true;
+            rightnode.queued=true;
+            draw_2D_configuration([rightnode.x,rightnode.y]);
+            if (rightnode.distance>(current_node.distance+eps)){
+                rightnode.parent=current_node;
+                rightnode.distance=current_node.distance+eps;
+                rightnode.priority=rightnode.distance;
+            }         
+        } 
+
+        if (!testCollision([downnode.x,downnode.y-0.001])&&!downnode.visited){
+            visit_queue.push(downnode);
+            downnode.visited=true;
+            downnode.queued=true;
+            draw_2D_configuration([downnode.x,downnode.y]);
+            if (downnode.distance>(current_node.distance+eps)){
+                downnode.parent=current_node;
+                downnode.distance=current_node.distance+eps;
+                downnode.priority=downnode.distance;
+            }         
+        }                       
+        return "iterating"
+    }
+}
+
+function iterateBFS() {
+    //console.log(visit_queue);
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+
+    current_node=visit_queue.shift();
+    current_node.visited=true;
+    current_node.queued=false;
+    search_visited++;
+    if (Math.abs(current_node.x-q_goal[0])<eps&&Math.abs(current_node.y-q_goal[1])<eps){
+        drawHighlightedPathGraph(current_node);
+        search_iterate=false;
+        return "succeeded"
+    }
+    
+    else{  
+        m=Math.round((current_node.x+2)/0.1);
+        n=Math.round((current_node.y+2)/0.1);
+        leftnode=G[m-1][n];
+        // leftnode.x=Math.round(10*leftnode.x)/10;
+        // leftnode.y=Math.round(10*leftnode.y)/10;
+        rightnode=G[m+1][n];
+        upnode=G[m][n-1];
+        downnode=G[m][n+1];
+        if (!testCollision([leftnode.x,leftnode.y])&&!leftnode.visited){
+            visit_queue.push(leftnode);
+            leftnode.visited=true;
+            leftnode.queued=true;
+            draw_2D_configuration([leftnode.x,leftnode.y]);
+            if (leftnode.distance>(current_node.distance+eps)){
+                leftnode.parent=current_node;
+                leftnode.distance=current_node.distance+eps;
+                leftnode.priority=leftnode.distance;
+            }
+        }
+
+        if (!testCollision([upnode.x,upnode.y])&&!upnode.visited){
+            visit_queue.push(upnode);
+            upnode.visited=true;
+            upnode.queued=true;
+            draw_2D_configuration([upnode.x,upnode.y]);
+            if (upnode.distance>(current_node.distance+eps)){
+                upnode.parent=current_node;
+                upnode.distance=current_node.distance+eps;
+                upnode.priority=upnode.distance;
+            }        
+        }
+
+        if (!testCollision([rightnode.x-0.001,rightnode.y])&&!rightnode.visited){
+            visit_queue.push(rightnode);
+            rightnode.visited=true;
+            rightnode.queued=true;
+            draw_2D_configuration([rightnode.x,rightnode.y]);
+            if (rightnode.distance>(current_node.distance+eps)){
+                rightnode.parent=current_node;
+                rightnode.distance=current_node.distance+eps;
+                rightnode.priority=rightnode.distance;
+            }         
+        } 
+
+        if (!testCollision([downnode.x,downnode.y-0.001])&&!downnode.visited){
+            visit_queue.push(downnode);
+            downnode.visited=true;
+            downnode.queued=true;
+            draw_2D_configuration([downnode.x,downnode.y]);
+            if (downnode.distance>(current_node.distance+eps)){
+                downnode.parent=current_node;
+                downnode.distance=current_node.distance+eps;
+                downnode.priority=downnode.distance;
+            }         
+        }                      
+        return "iterating"
+    }
+}
 
 function iterateRRT() {
 
@@ -430,9 +751,16 @@ function initSearchGraph() {
 
             // STENCIL: determine whether this graph node should be the start
             //   point for the search
-                visit_queue = [];
         }
     }
+    i=Math.floor((q_init[0]+2)/0.1);
+    j=Math.floor((q_init[1]+2)/0.1);
+    G[i][j].distance=0;
+    G[i][j].priority=0;
+    G[i][j].visited=true;
+    G[i][j].queued=true;
+    minheap_insert(visit_queue,G[i][j]);
+    draw_2D_configuration(G[i][j]);
 }
 
 function setPlanningScene() {
@@ -571,8 +899,72 @@ function insertTreeEdge(tree,q1_idx,q2_idx) {
 
     // STENCIL: implement min heap functions for graph search priority queue.
     //   These functions work use the 'priority' field for elements in graph.
+minheaper = {}; 
 
+// define insert function for min binary heap
+function minheap_insert(heap, new_element) {
+    heap.push(new_element);
+    // console.log(heap);
+    x = heap.length-1;
+    while (x !== 0) {
+        y = Math.floor((x-1)/2);
+        if (heap[x].priority < heap[y].priority) {
+           a = heap[y];
+           heap[y] = heap[x];
+           heap[x] = a;
+        }
+        x = y;
+    }
+    // STENCIL: implement your min binary heap insert operation
+}
 
+function minheap_extract(heap) {
+    if (heap.length>1){
+        b = heap[0];
+        heap[0]=heap[heap.length-1];
+        heap[heap.length-1] = b;
+        x = 0;
+        y = 1;
+        while (y+2 < heap.length){
+            if (heap[y].priority < heap[y+1].priority){
+                if (heap[y].priority < heap[x].priority){
+                    a = heap[x];
+                    heap[x] = heap[y];
+                    heap[y] = a;
+                    x = y;
+                    y = 2*x+1;
+                    }
+                else {
+                    break
+                }    
+                }
+            else {
+                if (heap[y+1].priority < heap[x].priority){
+                    a = heap[x];
+                    heap[x] = heap[y+1];
+                    heap[y+1] = a;
+                    x = y+1;
+                    y = 2*x+1;
+                }
+                else {
+                    break
+                }
+            }
+        }
+        if (y+2 === heap.length){
+            if(heap[y].priority < heap[x].priority){
+                a = heap[x];
+                heap[x] = heap[y];
+                heap[y] = a;
+            }
+        }
+        return heap.pop()
+    }
+    else if (heap.length === 1){
+        return heap.pop();
+    }
+    // STENCIL: implement your min binary heap extract operation
+}
 
 //////////////////////////////////////////////////
 /////     RRT IMPLEMENTATION FUNCTIONS
