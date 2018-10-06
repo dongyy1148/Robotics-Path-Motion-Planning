@@ -96,11 +96,8 @@ function init() {
     error_previous = [];
     derivative_error = [];
     anglebefore = [];
-<<<<<<< HEAD
     k1=[]; k2=[]; k3=[]; k4=[];
     kx2=[]; kx3=[]; kx4=[]; 
-=======
->>>>>>> homework1
 
     document.addEventListener('keydown', function(e) {
         if (e.keyCode == 88)  // 'x' == 88
@@ -154,7 +151,6 @@ function animate() {
     pendulum.servo.kp = 70;
     pendulum.servo.kd = 25;
     pendulum.servo.ki = 6;
-<<<<<<< HEAD
     error = pendulum.desired - pendulum.angle;  
     if(!accumulated_error){
         error_previous = error;
@@ -164,17 +160,6 @@ function animate() {
     pendulum.control = pendulum.servo.kp*error+pendulum.servo.kd*derivative_error+pendulum.servo.ki*accumulated_error;
     error_previous = error;
 
-=======
-
-    error = pendulum.desired - pendulum.angle;  
-        if(!accumulated_error){
-            error_previous = error;
-        }
-        accumulated_error += error * dt;
-        derivative_error = (error-error_previous)/dt;
-        pendulum.control = pendulum.servo.kp*error+pendulum.servo.kd*derivative_error+pendulum.servo.ki*accumulated_error;
-        error_previous = error;
->>>>>>> homework1
     // toggle activation of servo controller from user interaction
     if (keyboard.pressed("c"))
         servo_active_persist = !servo_active_persist;
@@ -194,20 +179,15 @@ function animate() {
         numerical_integrator = "none";
 
     if (numerical_integrator === "euler") {
-<<<<<<< HEAD
-=======
         pendulum.angle_previous = pendulum.angle;
         pendulum.angle += pendulum.angle_dot * dt;
         pendulum.angle_dot += pendulum_acceleration(pendulum.control, pendulum.angle_previous) * dt;
->>>>>>> homework1
     // STENCIL: a correct Euler integrator is REQUIRED for assignment
         pendulum.angle_previous=pendulum.angle;
         pendulum.angle+=dt*pendulum.angle_dot;
         pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
     }
     else if (numerical_integrator === "verlet") {
-<<<<<<< HEAD
-=======
         if (t<0.05){
             pendulum.angle_previous=pendulum.angle;
             pendulum.angle+=pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control, pendulum.angle)*dt*dt;
@@ -219,7 +199,6 @@ function animate() {
             pendulum.angle=2*pendulum.angle_previous-anglebefore+pendulum_acceleration(pendulum.control, pendulum.angle)*dt*dt;
             pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control, pendulum.angle);
         }
->>>>>>> homework1
     // STENCIL: basic Verlet integration
         if (t<0.05){
             pendulum.angle_previous=pendulum.angle;
@@ -234,20 +213,15 @@ function animate() {
         }
     }
     else if (numerical_integrator === "velocity verlet") {
-<<<<<<< HEAD
-=======
         pendulum.angle_previous=pendulum.angle;
         pendulum.angle += pendulum.angle_dot * dt + 1/2 * pendulum_acceleration(pendulum.control, pendulum.angle) * Math.pow(dt, 2);
         pendulum.angle_dot += 1/2 * (pendulum_acceleration(pendulum.control, pendulum.angle) + pendulum_acceleration(pendulum.control, pendulum.angle_previous)) * dt;
->>>>>>> homework1
     // STENCIL: a correct velocity Verlet integrator is REQUIRED for assignment
         pendulum.angle_previous=pendulum.angle;
         pendulum.angle=pendulum.angle_previous+pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
         pendulum.angle_dot+=(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+pendulum_acceleration(pendulum.control,pendulum.angle))/2*dt;
     }
     else if (numerical_integrator === "runge-kutta") {
-<<<<<<< HEAD
-=======
         kx1 = pendulum.angle;
         kv1 = pendulum.angle_dot;
         kx2 = kx1 + 1/2 * kv1 * dt;
@@ -259,7 +233,6 @@ function animate() {
         pendulum.angle += dt * 1/6* (kv1 + 2 * kv2 + 2 * kv3 + kv4);
         pendulum.angle_dot += dt * 1/6* (pendulum_acceleration(pendulum.control, kx1) + 2 * pendulum_acceleration(pendulum.control, kx2) + 2 * pendulum_acceleration(pendulum.control, kx3) + pendulum_acceleration(pendulum.control, kx4) );
  
->>>>>>> homework1
     // STENCIL: Runge-Kutta 4 integrator
         pendulum.angle_previous=pendulum.angle;
         k1=pendulum.angle_dot;
@@ -331,13 +304,8 @@ function animate() {
 
 function pendulum_acceleration(torque,theta) {
     // STENCIL: return acceleration(s) system equation(s) of motion 
-<<<<<<< HEAD
     a=-gravity/pendulum.length*Math.sin(theta)+torque/(pendulum.mass*Math.pow(pendulum.length,2));
     return a
-=======
-    return (p - pendulum.mass * gravity * pendulum.length * Math.sin(g)) /  (pendulum.mass * Math.pow(pendulum.length, 2));
-
->>>>>>> homework1
 }
 
 function createScene() {

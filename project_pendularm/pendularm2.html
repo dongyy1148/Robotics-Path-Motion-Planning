@@ -169,15 +169,9 @@ function animate() {
         pendulum.control[1] += -50.0;
 
     // STENCIL: implement servo controller
-<<<<<<< HEAD
-    pendulum.servo.kp = [170, 170];
-    pendulum.servo.kd = [125, 125];
-    pendulum.servo.ki = [60, 60];
-=======
     pendulum.servo.kp = [120, 70];
     pendulum.servo.kd = [95, 25];
     pendulum.servo.ki = [40, 6];
->>>>>>> homework1
 
     pendulum.angle[0]=angle_adjustment(pendulum.angle[0]);
     pendulum.angle[1]=angle_adjustment(pendulum.angle[1]);
@@ -258,15 +252,10 @@ function animate() {
         
         let kx1=pendulum.angle[0];
         let kx12=pendulum.angle[1];
-<<<<<<< HEAD
-        let ax1=pendulum_acceleration(pendulum)[0];
-        let ax12=pendulum_acceleration(pendulum)[1];
-=======
 
         let ax1=pendulum_acceleration(pendulum)[0];
         let ax12=pendulum_acceleration(pendulum)[1];
 
->>>>>>> homework1
         let kv1=pendulum.angle_dot[0];
         let kv12=pendulum.angle_dot[1]; 
         
@@ -280,11 +269,7 @@ function animate() {
         pendulum.angle_dot[1]=kv22;
         let ax2=pendulum_acceleration(pendulum)[0];
         let ax22=pendulum_acceleration(pendulum)[1];
-<<<<<<< HEAD
         
-=======
-
->>>>>>> homework1
         let kx3=kx1+1/2*kv2*dt;
         let kx32=kx12+1/2*kv22*dt;
         let kv3=kv1+1/2*ax2*dt;
@@ -295,11 +280,7 @@ function animate() {
         pendulum.angle_dot[1]=kv32;
         let ax3=pendulum_acceleration(pendulum)[0];
         let ax32=pendulum_acceleration(pendulum)[1];
-<<<<<<< HEAD
-   
-=======
      
->>>>>>> homework1
         let kx4=kx1+kv3*dt;
         let kx42=kx12+kv32*dt;
         let kv4=kv1+ax3*dt;
