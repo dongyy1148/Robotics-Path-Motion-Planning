@@ -179,10 +179,7 @@ function animate() {
         numerical_integrator = "none";
 
     if (numerical_integrator === "euler") {
-        pendulum.angle_previous = pendulum.angle;
-        pendulum.angle += pendulum.angle_dot * dt;
-        pendulum.angle_dot += pendulum_acceleration(pendulum.control, pendulum.angle_previous) * dt;
-    // STENCIL: a correct Euler integrator is REQUIRED for assignment
+        // STENCIL: a correct Euler integrator is REQUIRED for assignment
         pendulum.angle_previous=pendulum.angle;
         pendulum.angle+=dt*pendulum.angle_dot;
         pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
@@ -199,40 +196,15 @@ function animate() {
             pendulum.angle=2*pendulum.angle_previous-anglebefore+pendulum_acceleration(pendulum.control, pendulum.angle)*dt*dt;
             pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control, pendulum.angle);
         }
-    // STENCIL: basic Verlet integration
-        if (t<0.05){
-            pendulum.angle_previous=pendulum.angle;
-            pendulum.angle=pendulum.angle_previous+pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
-            pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
-        }
-        else{
-            anglebefore=pendulum.angle_previous;
-            pendulum.angle_previous=pendulum.angle;
-            pendulum.angle=2*pendulum.angle_previous-anglebefore+pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
-            pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
-        }
     }
     else if (numerical_integrator === "velocity verlet") {
-        pendulum.angle_previous=pendulum.angle;
-        pendulum.angle += pendulum.angle_dot * dt + 1/2 * pendulum_acceleration(pendulum.control, pendulum.angle) * Math.pow(dt, 2);
-        pendulum.angle_dot += 1/2 * (pendulum_acceleration(pendulum.control, pendulum.angle) + pendulum_acceleration(pendulum.control, pendulum.angle_previous)) * dt;
-    // STENCIL: a correct velocity Verlet integrator is REQUIRED for assignment
+        // STENCIL: a correct velocity Verlet integrator is REQUIRED for assignment
         pendulum.angle_previous=pendulum.angle;
         pendulum.angle=pendulum.angle_previous+pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
         pendulum.angle_dot+=(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+pendulum_acceleration(pendulum.control,pendulum.angle))/2*dt;
     }
     else if (numerical_integrator === "runge-kutta") {
-        kx1 = pendulum.angle;
-        kv1 = pendulum.angle_dot;
-        kx2 = kx1 + 1/2 * kv1 * dt;
-        kv2 = kv1 + 1/2 * pendulum_acceleration(pendulum.control, kx1) * dt;
-        kx3 = kx1 + 1/2 * kv2 *dt;
-        kv3 = kv1 + 1/2 * pendulum_acceleration(pendulum.control, kx2) * dt;
-        kx4 = kx1 + kv3 * dt;
-        kv4 = kv1 + pendulum_acceleration(pendulum.control, kx3) * dt;
-        pendulum.angle += dt * 1/6* (kv1 + 2 * kv2 + 2 * kv3 + kv4);
-        pendulum.angle_dot += dt * 1/6* (pendulum_acceleration(pendulum.control, kx1) + 2 * pendulum_acceleration(pendulum.control, kx2) + 2 * pendulum_acceleration(pendulum.control, kx3) + pendulum_acceleration(pendulum.control, kx4) );
- 
+    
     // STENCIL: Runge-Kutta 4 integrator
         pendulum.angle_previous=pendulum.angle;
         k1=pendulum.angle_dot;
