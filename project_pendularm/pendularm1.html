@@ -92,6 +92,12 @@ function init() {
     servo_active_state = {}; // string with current state of servo activation
 
     //STENCIL: for verlet integration, a first step in time is needed
+    error = [];
+    error_previous = [];
+    derivative_error = [];
+    anglebefore = [];
+    k1=[]; k2=[]; k3=[]; k4=[];
+    kx2=[]; kx3=[]; kx4=[]; 
 
     document.addEventListener('keydown', function(e) {
         if (e.keyCode == 88)  // 'x' == 88
@@ -142,6 +148,17 @@ function animate() {
         pendulum.control += -50.0; // add a motor force to the pendulum motor
 
     // STENCIL: implement servo controller
+    pendulum.servo.kp = 70;
+    pendulum.servo.kd = 25;
+    pendulum.servo.ki = 6;
+    error = pendulum.desired - pendulum.angle;  
+    if(!accumulated_error){
+        error_previous = error;
+    }
+    accumulated_error += error*dt;
+    derivative_error = (error-error_previous)/dt;
+    pendulum.control = pendulum.servo.kp*error+pendulum.servo.kd*derivative_error+pendulum.servo.ki*accumulated_error;
+    error_previous = error;
 
     // toggle activation of servo controller from user interaction
     if (keyboard.pressed("c"))
@@ -162,23 +179,43 @@ function animate() {
         numerical_integrator = "none";
 
     if (numerical_integrator === "euler") {
-
     // STENCIL: a correct Euler integrator is REQUIRED for assignment
-
+        pendulum.angle_previous=pendulum.angle;
+        pendulum.angle+=dt*pendulum.angle_dot;
+        pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
     }
     else if (numerical_integrator === "verlet") {
-
     // STENCIL: basic Verlet integration
-
+        if (t<0.05){
+            pendulum.angle_previous=pendulum.angle;
+            pendulum.angle=pendulum.angle_previous+pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
+            pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
+        }
+        else{
+            anglebefore=pendulum.angle_previous;
+            pendulum.angle_previous=pendulum.angle;
+            pendulum.angle=2*pendulum.angle_previous-anglebefore+pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
+            pendulum.angle_dot+=dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
+        }
     }
     else if (numerical_integrator === "velocity verlet") {
-
     // STENCIL: a correct velocity Verlet integrator is REQUIRED for assignment
-
+        pendulum.angle_previous=pendulum.angle;
+        pendulum.angle=pendulum.angle_previous+pendulum.angle_dot*dt+1/2*pendulum_acceleration(pendulum.control,pendulum.angle_previous)*dt*dt;
+        pendulum.angle_dot+=(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+pendulum_acceleration(pendulum.control,pendulum.angle))/2*dt;
     }
     else if (numerical_integrator === "runge-kutta") {
-
     // STENCIL: Runge-Kutta 4 integrator
+        pendulum.angle_previous=pendulum.angle;
+        k1=pendulum.angle_dot;
+        kx2=pendulum.angle_previous+1/2*dt*k1;
+        k2=k1+1/2*dt*pendulum_acceleration(pendulum.control,pendulum.angle_previous);
+        kx3=pendulum.angle_previous+1/2*dt*k2;
+        k3=k1+1/2*dt*pendulum_acceleration(pendulum.control,kx2);
+        kx4=pendulum.angle_previous+dt*k3;
+        k4=k1+dt*pendulum_acceleration(pendulum.control,kx3);
+        pendulum.angle=pendulum.angle_previous+1/6*dt*(k1+2*k2+2*k3+k4);
+        pendulum.angle_dot+=1/6*dt*(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+2*pendulum_acceleration(pendulum.control,kx2)+2*pendulum_acceleration(pendulum.control,kx3)+pendulum_acceleration(pendulum.control,kx4))
     } 
     else {
         pendulum.angle_previous = pendulum.angle;
@@ -237,8 +274,10 @@ function animate() {
 
 }
 
-function pendulum_acceleration(p,g) {
+function pendulum_acceleration(torque,theta) {
     // STENCIL: return acceleration(s) system equation(s) of motion 
+    a=-gravity/pendulum.length*Math.sin(theta)+torque/(pendulum.mass*Math.pow(pendulum.length,2));
+    return a
 }
 
 function createScene() {
