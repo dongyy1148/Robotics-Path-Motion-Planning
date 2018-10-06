@@ -62,8 +62,8 @@ animate();
 function init() {
 
     // create pendulum object and its kinematic and dynamic parameters
-    pendulum = {length:[2.0,2.0], mass:[2.0,2.0], angle:[Math.PI/2,0], angle_dot:[0.0,0.0]};
-    pendulum = {length:[2.0,2.0], mass:[2.0,2.0], angle:[0,0], angle_dot:[0.0,0.0]};
+    pendulum = {length:[2.0,2.0], mass:[2.0,2.0], angle:[Math.PI/2,Math.PI/2], angle_dot:[0.0,0.0]};
+    //pendulum = {length:[2.0,2.0], mass:[2.0,2.0], angle:[0,0], angle_dot:[0.0,0.0]};
     pendulum.angle_previous = [0,0];
 
     // initialize pendulum controls
@@ -78,7 +78,7 @@ function init() {
     gravity = 9.81;  // Earth gravity
 
     // initialize pendulum PID servo gains
-    pendulum.servo = {kp:0, kd:0, ki:0};  // no control
+    pendulum.servo = {kp:[0, 0], kd:[0, 0] , ki:[0, 0]};  // no control
 
     // initialize time and set timestep 
     t = 0;
@@ -88,7 +88,7 @@ function init() {
     //numerical_integrator = "euler";
     //numerical_integrator = "verlet";
     //numerical_integrator = "velocity verlet";
-    //numerical_integrator = "runge-kutta";
+    numerical_integrator = "runge-kutta";
 
     // OPTIONAL servo controller additional features
     steady_state_error_reset = false; // integral term resets after desired met
@@ -97,6 +97,15 @@ function init() {
     servo_active_state = {}; // string with current state of servo activation
 
     //STENCIL: for verlet integration, a first step in time is needed
+    error = [];
+    error_previous = [];
+    derivative_error = [];
+    anglebefore = [];
+    k1=[]; k2=[]; k3=[]; k4=[];
+    kx2=[]; kx3=[]; kx4=[]; 
+    pendulum.angle_new = [];
+    a_old=[]; v_old=[];
+    a_kx2=[]; a_kx3=[]; a_kx4=[];
 
     document.addEventListener('keydown', function(e) {
         if (e.keyCode == 88)  // 'x' == 88
@@ -135,27 +144,57 @@ function animate() {
 
     // update servo desired state from user interaction 
     if ( keyboard.pressed("e") )
-        pendulum.desired += 0.05; // move the desired angle for the servo
-    if ( keyboard.pressed("q") )
-        pendulum.desired += -0.05; // move the desired angle for the servo
+        pendulum.desired[0] += 0.05; // move the desired angle for the servo
+        pendulum.desired[0]=angle_adjustment(pendulum.desired[0]);
 
+    if ( keyboard.pressed("m") )
+        pendulum.desired[1] += 0.05;
+        pendulum.desired[1]=angle_adjustment(pendulum.desired[1]); 
+
+    if ( keyboard.pressed("q") )
+        pendulum.desired[0] += -0.05;// move the desired angle for the servo
+        pendulum.desired[0]=angle_adjustment(pendulum.desired[0]);
+
+    if ( keyboard.pressed("n") )
+        pendulum.desired[1] += -0.05; 
+        pendulum.desired[1]=angle_adjustment(pendulum.desired[1]);
 
     // add user force from user interaction
     if ( keyboard.pressed("d") )
-        pendulum.control += 50.0;  // add a motor force to the pendulum motor
-    else if ( keyboard.pressed("a") )
-        pendulum.control += -50.0; // add a motor force to the pendulum motor
+        pendulum.control[0] += 50.0;  // add a motor force to the pendulum motor
+        pendulum.control[1] += 50.0;
+    
+    if ( keyboard.pressed("a") )
+        pendulum.control[0] += -50.0; // add a motor force to the pendulum motor
+        pendulum.control[1] += -50.0;
 
     // STENCIL: implement servo controller
+    pendulum.servo.kp = [170, 170];
+    pendulum.servo.kd = [125, 125];
+    pendulum.servo.ki = [60, 60];
 
+    pendulum.angle[0]=angle_adjustment(pendulum.angle[0]);
+    pendulum.angle[1]=angle_adjustment(pendulum.angle[1]);
+
+    for (i=0; i<2; i++){
+        error[i] = pendulum.desired[i] - pendulum.angle[i];  
+        if(!accumulated_error[i]){
+            error_previous[i] = error[i];
+        }
+        accumulated_error[i] += error[i] * dt;
+        derivative_error[i] = (error[i]-error_previous[i])/dt;
+        pendulum.control[i] = pendulum.servo.kp[i]*error[i]+pendulum.servo.kd[i]*derivative_error[i]+pendulum.servo.ki[i]*accumulated_error[i];
+        error_previous[i] = error[i];
+    }
+    
     // toggle activation of servo controller from user interaction
     if (keyboard.pressed("c"))
         servo_active_persist = !servo_active_persist;
 
     // disable motor from user interaction 
     if (keyboard.pressed("s")||!servo_active_persist) {
-        pendulum.control = 0;
-        accumulated_error = 0;
+        pendulum.control = [0,0];
+        accumulated_error = [0,0];
         servo_active_state = "disabled";
     }
     else
@@ -166,20 +205,139 @@ function animate() {
     if (typeof numerical_integrator === "undefined")
         numerical_integrator = "none";
 
-        // STENCIL: a correct integrator is REQUIRED here for this assignment
+    if (numerical_integrator === "euler") {
+    // STENCIL: a correct Euler integrator is REQUIRED for assignment
+        a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        v_old=[pendulum.angle_dot[0],pendulum.angle_dot[1]];
+        pendulum.angle[0]+=dt*v_old[0];
+        pendulum.angle[1]+=dt*v_old[1];
+        pendulum.angle_dot[0]+=dt*a_old[0];
+        pendulum.angle_dot[1]+=dt*a_old[1];
+    }
 
+    else if (numerical_integrator === "verlet") {
+    // STENCIL: basic Verlet integration
+        if (t<0.05){
+            a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+            v_old=[pendulum.angle_dot[0],pendulum.angle_dot[1]];
+            pendulum.angle_previous=[pendulum.angle[0],pendulum.angle[1]];
+            pendulum.angle[0]+=pendulum.angle_dot[0]*dt+1/2*a_old[0]*dt*dt;
+            pendulum.angle[1]+=pendulum.angle_dot[1]*dt+1/2*a_old[1]*dt*dt;
+            pendulum.angle_dot[0]+=dt*a_old[0];
+            pendulum.angle_dot[1]+=dt*a_old[1];
+        }
+        else{
+            anglebefore[0]=pendulum.angle_previous[0];
+            anglebefore[1]=pendulum.angle_previous[1];
+            pendulum.angle_previous=[pendulum.angle[0],pendulum.angle[1]];
+            a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+            pendulum.angle[0]=2*pendulum.angle_previous[0]-anglebefore[0]+a_old[0]*dt*dt;
+            pendulum.angle[1]=2*pendulum.angle_previous[1]-anglebefore[1]+a_old[1]*dt*dt;
+            pendulum.angle_dot[0]+=dt*a_old[0];
+            pendulum.angle_dot[1]+=dt*a_old[1];
+        }
+    }
+
+    else if (numerical_integrator === "velocity verlet") {
+    // STENCIL: a correct velocity Verlet integrator is REQUIRED for assignmen
+        pendulum.angle_previous=[pendulum.angle[0],pendulum.angle[1]];
+        a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        pendulum.angle[0]=pendulum.angle_previous[0]+pendulum.angle_dot[0]*dt+1/2*pendulum_acceleration(pendulum)[0]*dt*dt;
+        pendulum.angle[1]=pendulum.angle_previous[1]+pendulum.angle_dot[1]*dt+1/2*pendulum_acceleration(pendulum)[1]*dt*dt;
+        pendulum.angle_dot[0]+=(a_old[0]+pendulum_acceleration(pendulum)[0])/2*dt;
+        pendulum.angle_dot[1]+=(a_old[1]+pendulum_acceleration(pendulum)[1])/2*dt;
+    }
+    else if (numerical_integrator === "runge-kutta") {
+    // STENCIL: Runge-Kutta 4 integrator
+        
+        let kx1=pendulum.angle[0];
+        let kx1b=pendulum.angle[1];
+        //pendulum.angle_previous=[pendulum.angle[0],pendulum.angle[1]];
+        let ax1=pendulum_acceleration(pendulum)[0];
+        let ax1b=pendulum_acceleration(pendulum)[1];
+        //a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        //a_old=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]-pendulum_acceleration(pendulum)[0]];
+        //k1=[pendulum.angle_dot[0],pendulum.angle_dot[1]];
+        let kv1=pendulum.angle_dot[0];
+        let kv1b=pendulum.angle_dot[1]; 
+        
+        let kx2=kx1+1/2*kv1*dt;
+        let kx2b=kx1b+1/2*kv1b*dt;
+        let kv2=kv1+1/2*ax1*dt;
+        let kv2b=kv1b+1/2*ax1b*dt;
+        pendulum.angle[0]=kx2;
+        pendulum.angle[1]=kx2b;
+        pendulum.angle_dot[0]=kv2;
+        pendulum.angle_dot[1]=kv2b;
+        let ax2=pendulum_acceleration(pendulum)[0];
+        let ax2b=pendulum_acceleration(pendulum)[1];
+        //k2[0]=k1[0]+1/2*dt*a_old[0];
+        //k2[1]=k1[1]+1/2*dt*a_old[1];
+        //pendulum.angle[0]=pendulum.angle_previous[0]+1/2*dt*k1[0]; 
+        //pendulum.angle[1]=pendulum.angle_previous[1]+1/2*dt*k1[1];
+        //pendulum.angle_dot[0]=k2[0];
+        //pendulum.angle_dot[1]=k2[1];
+        //a_kx2=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        //a_kx2=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]-pendulum_acceleration(pendulum)[0]];
+
+        let kx3=kx1+1/2*kv2*dt;
+        let kx3b=kx1b+1/2*kv2b*dt;
+        let kv3=kv1+1/2*ax2*dt;
+        let kv3b=kv1b+1/2*ax2b*dt;
+        pendulum.angle[0]=kx3;
+        pendulum.angle[1]=kx3b;
+        pendulum.angle_dot[0]=kv3;
+        pendulum.angle_dot[1]=kv3b;
+        let ax3=pendulum_acceleration(pendulum)[0];
+        let ax3b=pendulum_acceleration(pendulum)[1];
+
+        //k3[0]=k1[0]+1/2*dt*a_kx2[0];
+        //k3[1]=k1[1]+1/2*dt*a_kx2[1];
+        //pendulum.angle[0]=pendulum.angle_previous[0]+1/2*dt*k2[0]; //kx3
+        //pendulum.angle[1]=pendulum.angle_previous[1]+1/2*dt*k2[1]; //kx3
+        //pendulum.angle_dot[0]=k3[0];
+        //pendulum.angle_dot[1]=k3[1];
+        //a_kx3=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        //a_kx3=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]-pendulum_acceleration(pendulum)[0]];
+       
+        let kx4=kx1+kv3*dt;
+        let kx4b=kx1b+kv3b*dt;
+        let kv4=kv1+ax3*dt;
+        let kv4b=kv1b+ax3b*dt;
+        pendulum.angle[0]=kx4;
+        pendulum.angle[1]=kx4b;
+        pendulum.angle_dot[0]=kv4;
+        pendulum.angle_dot[1]=kv4b;
+        let ax4=pendulum_acceleration(pendulum)[0];
+        let ax4b=pendulum_acceleration(pendulum)[1];
+
+        // k4[0]=k1[0]+dt*a_kx3[0];
+        // k4[1]=k1[1]+dt*a_kx3[1];
+        // pendulum.angle[0]=pendulum.angle_previous[0]+1/2*dt*k3[0]; //kx4
+        // pendulum.angle[1]=pendulum.angle_previous[1]+1/2*dt*k3[1]; //kx4
+        // pendulum.angle_dot[0]=k4[0];
+        // pendulum.angle_dot[1]=k4[1];
+        // a_kx4=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]];
+        //a_kx4=[pendulum_acceleration(pendulum)[0],pendulum_acceleration(pendulum)[1]-pendulum_acceleration(pendulum)[0]];
+
+        pendulum.angle[0]=kx1+1/6*dt*(kv1+2*kv2+2*kv3+kv4);
+        pendulum.angle[1]=kx1b+1/6*dt*(kv1b+2*kv2b+2*kv3b+kv4b);
+        pendulum.angle_dot[0]=kv1+1/6*dt*(ax1+2*ax2+2*ax3+ax4);
+        pendulum.angle_dot[1]=kv1b+1/6*dt*(ax1b+2*ax2b+2*ax3b+ax4b);
+    } 
+    else {
         pendulum.angle_previous[0] = pendulum.angle[0];
-        pendulum.angle[0] = (pendulum.angle[0]+Math.PI/180)%(2*Math.PI);
-        pendulum.angle_dot[0] = (pendulum.angle[0]-pendulum.angle_previous[0])/dt;
         pendulum.angle_previous[1] = pendulum.angle[1];
-        pendulum.angle[1] = (pendulum.angle[1]-Math.PI/180)%(2*Math.PI);
-        pendulum.angle_dot[1] = (pendulum.angle[1]-pendulum.angle_previous[1])/dt;
+        pendulum.angle[0] = (pendulum.angle[0]+Math.PI/180)%(2*Math.PI);
+        pendulum.angle[1] = (pendulum.angle[1]+Math.PI/180)%(2*Math.PI);
+        pendulum.angle_dot[0] = (pendulum.angle[0]-pendulum.angle_previous[0])/dt;
+        pendulum.angle_dot[1] = (pendulum.angle[0]-pendulum.angle_previous[1])/dt;
         numerical_integrator = "none";
-
+    }
 
     // set the angles of the pendulum
     pendulum.geom.rotation.y = pendulum.angle[0];  // threejs cylinders have their axes along the y-axis
-    pendulum_mass.rotation.z = pendulum.angle[1];
+    pendulum_mass.rotation.z = pendulum.angle[1]-pendulum.angle[0];
 
     // advance time
     t = t + dt;
@@ -195,17 +353,17 @@ function animate() {
         "<br>" +
         " x_dot = " + pendulum.angle_dot[0].toFixed(2)  + " " + pendulum.angle_dot[1].toFixed(2) + 
         "<br>" +
-/*
-        " x_desired = " + pendulum.desired.toFixed(2) + 
+
+        " x_desired = " + pendulum.desired[0].toFixed(2) + " " + pendulum.desired[1].toFixed(2) +
         "<br><br> Servo: " + servo_active_state + " <br> " +
-        " u = " + pendulum.control.toFixed(2) +
+        " u = " + pendulum.control[0].toFixed(2) + " " + pendulum.control[1].toFixed(2) +
         "<br>" +
-        " kp = " + pendulum.servo.kp.toFixed(2) + 
+        " kp = " + pendulum.servo.kp[0].toFixed(2) + " " + pendulum.servo.kp[1].toFixed(2) +
         "<br>" +
-        " kd = " + pendulum.servo.kd.toFixed(2) + 
+        " kd = " + pendulum.servo.kd[0].toFixed(2) + " " + pendulum.servo.kd[1].toFixed(2) +
         "<br>" +
-        " ki = " + pendulum.servo.ki.toFixed(2) +
-*/
+        " ki = " + pendulum.servo.ki[0].toFixed(2) + " " + pendulum.servo.ki[1].toFixed(2) +
+
         "<br><br>  Pendulum <br> " +
         " mass = " + pendulum.mass[0].toFixed(2) + " " + pendulum.mass[1].toFixed(2) +
         "<br>" +
@@ -217,7 +375,9 @@ function animate() {
         "<br>" +
         " a/d - apply user force " +
         "<br>" +
-        " q/e - adjust desired angle " +
+        " q/e - adjust desired angle for link 1 " +
+        "<br>" +
+        " m/n - adjust desired angle for link 2 " +
         "<br>" +
         " c|x - toggle servo " +
         "<br>" +
@@ -225,64 +385,43 @@ function animate() {
 
     ;
 
-
     // threejs rendering update
     renderer.render( scene, camera );
 
 }
 
-function pendulum_acceleration(p,g) {
+function angle_adjustment(angle){
+    return (angle+Math.PI)%(2*Math.PI)-Math.PI;
+}
 
+function pendulum_acceleration(p) {
+    var t1 = p.control[0];
+    var t2 = p.control[1];
+    var v1 = p.angle_dot[0];
+    var v2 = p.angle_dot[1];
+    var x1 = p.angle[0];
+    var x2 = p.angle[1]; 
     var m1 = p.mass[0];
     var m2 = p.mass[1];
     var l1 = p.length[0];
     var l2 = p.length[1];
-    var x1 = p.angle[0];
-    var x2 = p.angle[1];
-    var v1 = p.angle_dot[0];
-    var v2 = p.angle_dot[1];
+    num1 = -m2*l2*Math.sin(x1-x2)*Math.pow(v2,2)
+        -m2*l1*Math.sin(x1-x2)*Math.cos(x1-x2)*Math.pow(v1,2)
+        -(m1+m2)*gravity*Math.sin(x1)
+        +m2*gravity*Math.sin(x2)*Math.cos(x1-x2)
+        +t1/l1-t2*Math.cos(x1-x2)/l2;
+    den1 = (m1+m2)*l1-m2*l1*Math.pow(Math.cos(x1-x2),2);
+    var a1 = num1 / den1;
+    num2 = l1*Math.sin(x1-x2)*Math.pow(v1,2)
+        -gravity*Math.sin(x2)
+        +m2*l2*Math.pow(v2,2)*Math.sin(x1-x2)*Math.cos(x1-x2)/(m1+m2)
+        +gravity*Math.sin(x1)*Math.cos(x1-x2)
+        +t2/m2/l2
+        -t1*Math.cos(x1-x2)/l1/(m1+m2);
+    den2 = l2*(1-m2*Math.pow(Math.cos(x1-x2),2)/(m1+m2));
+    var a2 = num2 / den2;
 
-    var a1 = 
-        ( -m2 * Math.cos(x1-x2) * l1* v1*v1 * Math.sin(x1-x2)
-        + m2 * Math.cos(x1-x2) * g * Math.sin(x2) 
-        - m2 * l2 * v2*v2 * Math.sin(x1-x2) 
-        - (m1+m2) * g * Math.sin(x1) )
-        / (l1 * (m1+m2) 
-        - m2 * Math.cos(x1-x2) * Math.cos(x1-x2) );
-
-    var a2 = 
-        ( (m1+m2) * 
-          ( l1 * v1*v1 * Math.sin(x1-x2)
-          + ((v2*v2 * Math.sin(x1-x2) * Math.cos(x1-x2) * m2 * l2) / (m1+m2))
-          + Math.cos(x1-x2) * g * Math.sin(x1)
-          - g * Math.sin(x2) ) )
-        / (l2 * (m1 + m2 * Math.sin(x1-x2) * Math.sin(x1-x2)) ); 
-
-   //console.log( (l2 * (m1 + m2 * Math.sin(x1-x2) * Math.sin(x1-x2)) ));
-/*
-   console.log(
-      ( (m1+m2) * 
-          ( l1 * v1*v1 * Math.sin(x1-x2)
-          + ((v2*v2 * Math.sin(x1-x2) * Math.cos(x1-x2) * m2 * l2) / (m1+m2))
-          + Math.cos(x1-x2) * g * Math.sin(x1)
-          - g * Math.sin(x2) ) )
-   );
-*/
-
-/*
-   console.log(
-     ( -m2 * Math.cos(x1-x2) * l1* v1*v1 * Math.sin(x1-x2)
-        + m2 * Math.cos(x1-x2) * g * Math.sin(x2) 
-        - m2 * l2 * v2*v2 * Math.sin(x1-x2) 
-        - (m1+m2) * g * Math.sin(x1) )
-        / (l1 * (m1+m2) 
-        - m2 * Math.cos(x1-x2) * Math.cos(x1-x2) )
-   );
-*/
-
-    return [a1,a2];
-
-    // STENCIL: return acceleration(s) system equation(s) of motion 
+        return [a1,a2];
 }
 
 function createScene() {
