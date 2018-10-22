@@ -758,7 +758,7 @@ kineval.initRobotJointsGeoms = function initRobotJointsGeoms() {
 
         robot.joints[x].display_geom = new THREE.Mesh(joint_geom, joint_material); 
 
-        // STENCIL: update vector_normalize for joint cylinder placement
+        // STENCIL: update vector_normalize for joint cylinder placement  
         // if joint axis not aligned with y-axis, rotate 3js cylinder axis to align with y
         if (typeof vector_cross !== 'undefined')
         if (!((robot.joints[x].axis[0] == 0) && (robot.joints[x].axis[2] == 0))) {

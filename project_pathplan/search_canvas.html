@@ -319,8 +319,8 @@ function iterateGraphSearch() {
     }
     
     else{  
-        m=Math.round((current_node.x+2)/0.1);
-        n=Math.round((current_node.y+2)/0.1);
+        m=Math.round((current_node.x+2)/eps);
+        n=Math.round((current_node.y+2)/eps);
         leftnode=G[m-1][n];
         // leftnode.x=Math.round(10*leftnode.x)/10;
         // leftnode.y=Math.round(10*leftnode.y)/10;
@@ -399,8 +399,8 @@ function iterateGBFS() {
     }
     
     else{  
-        m=Math.round((current_node.x+2)/0.1);
-        n=Math.round((current_node.y+2)/0.1);
+        m=Math.round((current_node.x+2)/eps);
+        n=Math.round((current_node.y+2)/eps);
         leftnode=G[m-1][n];
         // leftnode.x=Math.round(10*leftnode.x)/10;
         // leftnode.y=Math.round(10*leftnode.y)/10;
@@ -476,8 +476,8 @@ function iterateDFS() {
     }
     
     else{  
-        m=Math.round((current_node.x+2)/0.1);
-        n=Math.round((current_node.y+2)/0.1);
+        m=Math.round((current_node.x+2)/eps);
+        n=Math.round((current_node.y+2)/eps);
         leftnode=G[m-1][n];
         // leftnode.x=Math.round(10*leftnode.x)/10;
         // leftnode.y=Math.round(10*leftnode.y)/10;
@@ -753,8 +753,8 @@ function initSearchGraph() {
             //   point for the search
         }
     }
-    i=Math.floor((q_init[0]+2)/0.1);
-    j=Math.floor((q_init[1]+2)/0.1);
+    i=Math.floor((q_init[0]+2)/eps);
+    j=Math.floor((q_init[1]+2)/eps);
     G[i][j].distance=0;
     G[i][j].priority=0;
     G[i][j].visited=true;
