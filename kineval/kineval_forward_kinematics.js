@@ -73,7 +73,6 @@ function traverseFKBase(){
         DR = matrix_multiply(DR,Ry);
         DR = matrix_multiply(DR,Rx);
     
-    
     // robot.links[robot.base].xform= DR;
     //mstack.push(matrix_multiply(mstack[mstack.length-1],DR));
     robot.links[robot.base].xform=matrix_multiply(mstack[mstack.length-1],DR);
@@ -111,16 +110,36 @@ function traverseFKLink(link){
             x = robot.joints[joint].origin.rpy[0];
             y = robot.joints[joint].origin.rpy[1];
             z = robot.joints[joint].origin.rpy[2];
+            angle = robot.joints[joint].angle;
+            axis = robot.joints[joint].axis;
+            axis = vector_normalize(axis);
+            if(robot.links_geom_imported) {
+                type = robot.joints[joint].type;
+            }
+            else {
+                type = 'continuous';
+            }
             D = generate_translation_matrix(tx,ty,tz);
             Rx = generate_rotation_matrix_X(x);
             Ry = generate_rotation_matrix_Y(y);
             Rz = generate_rotation_matrix_Z(z);
             var DR = [];
-           
-                DR = matrix_multiply(D,Rz);
-                DR = matrix_multiply(DR,Ry);
-                DR = matrix_multiply(DR,Rx);
-      
+            var q = [];
+            if (type === 'prismatic') {
+                Dul = generate_translation_matrix(angle * axis[0],angle * axis[1],angle * axis[2]);
+            }
+            else if (type === 'continuous' || type === 'revolute') {
+                q = quaternion_from_axisangle(angle, axis);
+                q = quaternion_normalize(q);
+                Dul = quaternion_to_rotation_matrix(q);
+            }
+            else {
+                Dul = generate_identity(4);
+            }
+            DR = matrix_multiply(D,Rz);
+            DR = matrix_multiply(DR,Ry);
+            DR = matrix_multiply(DR,Rx);
+            DR = matrix_multiply(DR,Dul);
             mstack.push(matrix_multiply(mstack[mstack.length-1],DR));
             
             // console.log("add");

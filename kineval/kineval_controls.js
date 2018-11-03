@@ -25,7 +25,7 @@ kineval.applyControls = function robot_apply_controls(curRobot) {
 
         // update joint angles
         if ( (typeof curRobot.joints[x].type !== 'undefined')
-             || (typeof curRobot.joints[x].type !== 'fixed') ) { 
+             || (curRobot.joints[x].type !== 'fixed') ) { 
 
             if (isNaN(curRobot.joints[x].control))
                 console.warn("kineval: control value for " + x +" is a nan");
@@ -34,7 +34,22 @@ kineval.applyControls = function robot_apply_controls(curRobot) {
         }
 
     // STENCIL: enforce joint limits for prismatic and revolute joints
+        if ( (curRobot.joints[x].type === 'prismatic')
+             || (curRobot.joints[x].type === 'revolute') ) { 
+            curRobot.joints[x].angle += curRobot.joints[x].control;
+            angletest = curRobot.joints[x].angle;
+            if (angletest < curRobot.joints[x].limit.lower) {
+                curRobot.joints[x].angle = curRobot.joints[x].limit.lower;
+            }
 
+            else if (angletest > curRobot.joints[x].limit.upper) {
+                curRobot.joints[x].angle = curRobot.joints[x].limit.upper;
+            }
+            
+            else {
+                curRobot.joints[x].angle = curRobot.joints[x].angle;
+            }
+        }
 
         // clear controls back to zero for next timestep
         curRobot.joints[x].control = 0;
