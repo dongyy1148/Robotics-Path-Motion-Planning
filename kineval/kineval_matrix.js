@@ -47,10 +47,10 @@ function matrix_transpose(m1) {
     var mat = [];
     var i,j;
 
-    for (i=0;i<m1.length;i++) { // for each row of m1
+    for (i=0;i<m1[0].length;i++) { // for each row of m1
         mat[i] = [];
-        for (j=0;j<m1[0].length;j++) { // for each column of m1
-            mat[j][i] = m1[i][j];
+        for (j=0;j<m1.length;j++) { // for each column of m1
+            mat[i][j] = m1[j][i];
         }
     }
     return mat;
@@ -65,18 +65,18 @@ function matrix_pseudoinverse(m1) {
     var m=m1[0].length;
     if (n>m){
         m1_t=matrix_transpose(m1);
-        m1_1=Math.inv(matrix_multiply(m1_t,m1));
+        m1_1=numeric.inv(matrix_multiply(m1_t,m1));
         m1_left=matrix_multiply(m1_1,m1_t);
         return m1_left;
     }
 
     else if (n===m) {
-        return Math.inv(m1);
+        return numeric.inv(m1);
     }
 
     else {
         m1_t=matrix_transpose(m1);
-        m1_1=Math.inv(matrix_multiply(m1,m1_t));
+        m1_1=numeric.inv(matrix_multiply(m1,m1_t));
         m1_right=matrix_multiply(m1_t,m1_1);
         return m1_right;
     }
@@ -124,7 +124,7 @@ function vector_cross(v1,v2) {
 
     for (i=0;i<3;i++) {
         mat[i] = [];
-        v3[i] = [v2[i]];
+        v3[i] = v2[i];
         for (j=0;j<3;j++) {
             mat[i][j] = 0;
         }
@@ -135,7 +135,7 @@ function vector_cross(v1,v2) {
     mat[1][2] = -v1[0];
     mat[2][0] = -v1[1];
     mat[2][1] = v1[0];
-    v = matrix_multiply(mat,v3);
+    v = matrix_multiply_vector(mat,v3);
     return v;
 }
 
@@ -203,3 +203,34 @@ function generate_rotation_matrix_Z(x) {
     //   generate_rotation_matrix_Y
     //   generate_rotation_matrix_Z
 
+    function matrix_multiply_vector(m1,m2) {
+        var mat = [];
+        var i,m;
+        if (m1[0].length === m2.length){
+            for (i=0;i<m1.length;i++) { // for each row of m1
+                mat[i] = 0;               
+                for (m=0;m<m2.length;m++){
+                    mat[i] += m1[i][m]*m2[m];
+                }             
+            }
+        return mat;
+        }
+        else{
+            return "false"
+        }
+    }
+
+    function vector_sub(v1,v2) {
+        var v = [];
+        var i;
+        if (v1.length === v2.length){
+            for (i=0;i<v1.length;i++) { // for each row of m1
+                v[i] = v1[i] - v2[i];
+            }
+        return v;
+        }
+        else{
+            return "false"
+        }
+    }
+    

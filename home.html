@@ -187,7 +187,7 @@ function my_animate() {
 
     // if requested, perform inverse kinematics control to reach to point
     kineval.robotInverseKinematics(kineval.params.ik_target, robot.endeffector.frame, robot.endeffector.position);
-
+ 
     // if requested, perform configuration space motion planning to home pose
     kineval.planMotionRRTConnect();
 
