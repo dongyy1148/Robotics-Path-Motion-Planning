@@ -265,7 +265,8 @@ kineval.toggleStartpointMode = function toggle_startpoint_mode() {
 
 
 kineval.changeActiveLinkDown = function change_active_link_down() {
-    if (typeof robot.links[robot.joints[kineval.params.active_joint].child].children !== 'undefined') {
+
+    if (robot.links[robot.joints[kineval.params.active_joint].child].children.length !== 0) {
         kineval.params.active_link = robot.joints[kineval.params.active_joint].child;
         kineval.params.active_joint = robot.links[kineval.params.active_link].children[0];
         textbar.innerHTML = kineval.params.active_joint + " is now the active joint";

@@ -554,6 +554,8 @@ kineval.initGUIDisplay = function initGUIDisplay () {
     var dummy_planning_object = {};
     dummy_planning_object.start_planner = function() {kineval.params.update_motion_plan = true; console.log("start planning")};
     gui_plan.add(dummy_planning_object, 'start_planner');
+    dummy_planning_object.stop_planner = function() {kineval.params.update_motion_plan = false; console.log("stop planning")};
+    gui_plan.add(dummy_planning_object, 'stop_planner');
     gui_plan.add(kineval.params, 'planner_state').listen();
     gui_plan.add(kineval.params, 'persist_motion_plan_traversal');
 

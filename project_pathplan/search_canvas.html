@@ -70,6 +70,7 @@ function init() {
     animate();
 }
 
+
 function initSearch() {
 
     // specify default search algorithm to use for planning
@@ -92,6 +93,10 @@ function initSearch() {
     // specify default eps (epsilon) spatial resolution variable
     //   for RRT, specifies threshold radius for step size and reaching goal
     eps = 0.1;
+
+    if (search_alg == "RRT") {
+        eps = 0.1;
+    }
 
     // create event handlers for the mouse
     canvas = document.getElementById("myCanvas");
@@ -143,6 +148,7 @@ function initSearch() {
     T_a = initRRT(q_init);
     // also initialize search tree from goal configuration (RRT-Connect)
     T_b = initRRT(q_goal);
+    q_new = q_init;
 
     // initialize graph search algorithms (DFS, BFS, A-star) 
     initSearchGraph();
@@ -632,6 +638,31 @@ function iterateRRT() {
     //   insertTreeVertex - adds and displays new configuration vertex for a tree
     //   insertTreeEdge - adds and displays new tree edge between configurations
     //   drawHighlightedPath - renders a highlighted path in a tree
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+    
+
+    if (Math.abs(q_new[0]-q_goal[0])<eps&&Math.abs(q_new[1]-q_goal[1])<eps){
+        path = dfsPath(T_a,T_a.newest);
+        drawHighlightedPath(path);        
+        search_iterate=false;
+        return "succeeded"
+    }
+  
+    else{  
+        q_rand = randomConfig();
+        var index = findNearestNeighbor(T_a,q_rand);
+        q_near = T_a.vertices[index].vertex;
+        q_newpre = newConfig(q_near,q_rand,eps);
+
+        if (!testallcollision(q_near,q_newpre)){
+            q_new = q_newpre;
+            extendRRT(T_a,q_new,index);
+        }
+    }  
+
 }
 
 function iterateRRTConnect() {
@@ -652,10 +683,75 @@ function iterateRRTConnect() {
     //   insertTreeVertex - adds and displays new configuration vertex for a tree
     //   insertTreeEdge - adds and displays new tree edge between configurations
     //   drawHighlightedPath - renders a highlighted path in a tree
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+
+    q_rand = randomConfig();
+    var index = findNearestNeighbor(T_a,q_rand);
+    q_near = T_a.vertices[index].vertex;
+    q_newpre = newConfig(q_near,q_rand,eps);
+    if (!testallcollision(q_near,q_newpre)){
+        q_new = q_newpre;
+        extendRRT(T_a,q_new,index);
+        var index2 = findNearestNeighbor(T_b,q_new);
+        var q_near2 = T_b.vertices[index2].vertex;
+        var q_newpre2 = newConfig(q_near2,q_new,eps);
+        //var q_old = q_near2;
+        while (!testallcollision(q_near2,q_newpre2)){
+            extendRRT(T_b,q_newpre2,index2);
+            index2 = findNearestNeighbor(T_b,q_new);
+            q_near2 = T_b.vertices[index2].vertex;
+            q_newpre2 = newConfig(q_near2,q_new,eps);
+            if (Math.abs(q_new[0]-q_newpre2[0])<eps&&Math.abs(q_new[1]-q_newpre2[1])<eps&&!testallcollision(q_near2,q_newpre2)){
+                extendRRT(T_b,q_newpre2,index2);
+                path = dfsPath(T_a,T_a.newest);
+                drawHighlightedPath(path); 
+                path = dfsPath(T_b,T_b.newest);
+                drawHighlightedPath(path);       
+                search_iterate=false;
+                return "succeeded"
+            }
+        }
+        T_c = T_a;
+        T_a = T_b;
+        T_b = T_c;
+    }
+
 }
 
 function iterateRRTStar() {
+    if (visit_queue.length === 0){
+        search_iterate=false;
+        return "failed"
+    }
+    
 
+    if (Math.abs(q_new[0]-q_goal[0])<eps&&Math.abs(q_new[1]-q_goal[1])<eps){
+        path = dfsPath(T_a,T_a.newest);
+        drawHighlightedPath(path);        
+        search_iterate=false;
+        return "succeeded"
+    }
+  
+    else{  
+        q_rand = randomConfig();
+        var index = findNearestNeighbor(T_a,q_rand);
+        q_near = T_a.vertices[index];
+        q_newpre = newConfig(q_near.vertex,q_rand,eps);
+
+        if (!testallcollision(q_near.vertex,q_newpre)){
+            var indexsum = findnear(T_a, q_newpre, 0.5);
+            var parent = chooseparent(q_near, indexsum, q_newpre);
+            q_new = q_newpre;
+            var index_parent = T_a.vertices.indexOf(parent);
+            extendRRT(T_a,q_new,index_parent);
+            T_a.vertices[T_a.newest].cost = parent.cost + 
+                Math.sqrt(Math.pow((parent.vertex[0]-q_new[0]),2)+Math.pow((parent.vertex[1]-q_new[1]),2));
+            T_a = rewire(T_a,indexsum,parent,T_a.vertices[T_a.newest]);
+        }
+    }  
 }
 
 //////////////////////////////////////////////////
@@ -806,6 +902,20 @@ function setPlanningScene() {
     }
 }
 
+function testallcollision(q1,q2){
+    var collision = false;
+    q=[0,0];
+    for (let i=1;i<12;i++){
+        q[0] = (q2[0]-q1[0])/10*i+q1[0];
+        q[1] = (q2[1]-q1[1])/10*i+q1[1];
+        collision = collision || testCollision(q);        
+    }
+    if (collision === true){
+        return true
+    }
+    return false
+}
+
 function testCollision(q) {
 
     var j;
@@ -841,7 +951,7 @@ function initRRT(q) {
     tree.vertices[0] = {};
     tree.vertices[0].vertex = q;
     tree.vertices[0].edges = [];
-
+    tree.vertices[0].cost = 0;
     // maintain index of newest vertex added to tree
     tree.newest = 0;
 
@@ -970,13 +1080,115 @@ function minheap_extract(heap) {
 /////     RRT IMPLEMENTATION FUNCTIONS
 //////////////////////////////////////////////////
 
+
+//         if (!testCollision([q_newpre[0],q_newpre[1]])){
+//             q_new = q_newpre;
+//             insertTreeVertex(T_a,q_new);
+//             insertTreeEdge(T_a,j,T_a.newest);
+            
+//         } 
     // STENCIL: implement RRT-Connect functions here, such as:
+    function rewire(tree,index,q_min,z_new){
+        indexout = tree.vertices.indexOf(q_min);
+        for (var i=0;i<index.length;i++) {
+            var m = index[i];
+            var q_pre2 = tree.vertices[m];
+            if (m !== indexout){
+                if (!testallcollision(q_pre2.vertex,z_new.vertex)){
+                    var distance2 = z_new.cost + Math.sqrt(Math.pow((q_pre2.vertex[0]-z_new.vertex[0]),2)+Math.pow((q_pre2.vertex[1]-z_new.vertex[1]),2)); 
+                    if (distance2 < q_pre2.cost) {
+                        q_pre2.cost = distance2;
+                        q_pre2.edges[0] = z_new;
+                    }
+                } 
+            }
+        }
+        return tree;
+    }
+
+    function chooseparent(q_near, index ,q_newpre){
+        var z_min = q_near;
+        var j = 0;
+        var c_min = z_min.cost
+             + Math.sqrt(Math.pow((q_newpre[0]-z_min.vertex[0]),2)+Math.pow((q_newpre[1]-z_min.vertex[1]),2)); 
+        for (var i=0;i<index.length;i++) {
+            var m = index[i];
+            var q_pre = T_a.vertices[m];
+            if (!testallcollision(q_pre.vertex,q_newpre)){
+                var distance = q_pre.cost + Math.sqrt(Math.pow((q_pre.vertex[0]-q_newpre[0]),2)+Math.pow((q_pre.vertex[1]-q_newpre[1]),2)); 
+                if (distance < c_min) {
+                    c_min = distance;
+                    z_min = q_pre;
+                }
+            }      
+        }
+        return z_min;
+            
+    }
+
+    function findnear(tree,q,radius){
+        var index =[];
+        for (var i=0;i<tree.vertices.length;i++) {
+            var distance = Math.sqrt(Math.pow((tree.vertices[i].vertex[0]-q[0]),2)+Math.pow((tree.vertices[i].vertex[1]-q[1]),2)); 
+            if (distance < radius) {
+                index.push(i);
+            }      
+        }
+        return index;
+    }
     //   extendRRT
+    function extendRRT(tree,q_new,index){
+            insertTreeVertex(tree,q_new);
+            insertTreeEdge(tree,index,tree.newest);
+    }
     //   connectRRT
+    function connectRRT(){
+
+    }
     //   randomConfig
+    function randomConfig(){
+        var q_rand = [0,0];
+        q_rand[0] = 8 * Math.random() - 2; 
+        q_rand[1] = 8 * Math.random() - 2; 
+        return q_rand
+    }
     //   newConfig
+    function newConfig(q_old,q_goal,eps) {
+        var dis = Math.sqrt(Math.pow((q_old[0]-q_goal[0]),2)+Math.pow((q_old[1]-q_goal[1]),2)); 
+        var q_newpre =[0,0];
+        if (dis > eps){
+            q_newpre[0] = q_old[0] + (q_goal[0]-q_old[0])/dis*eps;
+            q_newpre[1] = q_old[1] + (q_goal[1]-q_old[1])/dis*eps;
+        }
+        else {
+            q_newpre = q_goal;
+        }
+        return q_newpre
+    }
     //   findNearestNeighbor
+    function findNearestNeighbor(tree,goal){
+        var min_dis = 1000;
+        var j = 0;
+        for (var i=0;i<tree.vertices.length;i++) {
+            distance = Math.sqrt(Math.pow((tree.vertices[i].vertex[0]-goal[0]),2)+Math.pow((tree.vertices[i].vertex[1]-goal[1]),2)); 
+            if (distance < min_dis) {
+                min_dis = distance;
+                j = i;
+            }      
+        }
+        return j;
+    }
     //   dfsPath
+    function dfsPath(tree,index){
+        var path = [];
+        q_current = tree.vertices[index];
+        path.push(q_current);
+        while (tree.vertices.indexOf(q_current) !== 0){
+            q_current = q_current.edges[0];
+            path.push(q_current);
+        }
+        return path;
+    }
 
 </script>
 
