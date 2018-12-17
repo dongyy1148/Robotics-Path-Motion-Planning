@@ -3,9 +3,9 @@
 
     KinEval | Kinematic Evaluator | inverse kinematics
 
-    Implementation of robot kinematics, control, decision making, and dynamics 
+    Implementation of robot kinematics, control, decision making, and dynamics
         in HTML5/JavaScript and threejs
-     
+
     @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
 
     Chad Jenkins
@@ -19,7 +19,7 @@
 kineval.robotInverseKinematics = function robot_inverse_kinematics(endeffector_target_world, endeffector_joint, endeffector_position_local) {
 
     // compute joint angle controls to move location on specified link to Cartesian location
-    if ((kineval.params.update_ik)||(kineval.params.persist_ik)) { 
+    if ((kineval.params.update_ik)||(kineval.params.persist_ik)) {
         // if update requested, call ik iterator and show endeffector and target
         kineval.iterateIK(endeffector_target_world, endeffector_joint, endeffector_position_local);
         if (kineval.params.trial_ik_random.execute)
@@ -59,39 +59,45 @@ kineval.randomizeIKtrial = function randomIKtrial () {
 }
 
 kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world, endeffector_joint, endeffector_position_local) {
-    endeffector_world = matrix_multiply_vector(robot.joints[endeffector_joint].xform, endeffector_position_local);
+    var endeffector_world = matrix_multiply_vector(robot.joints[endeffector_joint].xform, endeffector_position_local);
     //angle = robot.joints[endeffector_joint].angle;
-    axis = robot.joints[endeffector_joint].axis;
-    axis = vector_normalize(axis);
-    axis = [axis[0], axis[1], axis[2], 1];
+    var axis = robot.joints[endeffector_joint].axis;
+    // axis = vector_normalize(axis);
+    axis = [axis[0], axis[1], axis[2], 0];
     if(robot.links_geom_imported) {
         type = robot.joints[endeffector_joint].type;
     }
     else {
         type = 'continuous';
     }
+    var joint_list = [];
     var JT=[]; J0=[]; J1=[]; J2=[]; v1=[]; v2=[]; v3 = [];
     if (type === 'prismatic') {
         v1 = matrix_multiply_vector(robot.joints[endeffector_joint].xform,axis);
         v2 = matrix_multiply_vector(robot.joints[endeffector_joint].xform,[0,0,0,1]);
-        J0 = vector_sub(v1,v2);
-        J0 = vector_normalize(J0);
+        // J0 = vector_sub(v1,v2);
+        v1 = [v1[0], v1[1], v1[2]];
+        v1 = vector_normalize(v1);
+        J0 = v1;
         J0 = [J0[0], J0[1], J0[2],0,0,0];
         JT.push(J0) ;
+        joint_list.push(robot.joints[endeffector_joint]);
     }
     else if (type === 'continuous' || type === 'revolute') {
         v1 = matrix_multiply_vector(robot.joints[endeffector_joint].xform,axis);
         v2 = matrix_multiply_vector(robot.joints[endeffector_joint].xform,[0,0,0,1]);
         v3 = endeffector_world;
-        J1 = vector_sub(v1,v2);
-        J1 = vector_normalize(J1);
+        // J1 = vector_sub(v1,v2);
+        v1 = [v1[0], v1[1], v1[2]];
+        v1 = vector_normalize(v1);
         J2 = vector_sub(v3,v2);
-        J0 = vector_cross(J1,J2); 
-        J0 = [J0[0], J0[1], J0[2], J1[0], J1[1], J1[2] ];
+        var J4 = vector_cross(v1,J2);
+        J0 = [J4[0], J4[1], J4[2], v1[0], v1[1], v1[2] ];
         JT.push(J0) ;
+        joint_list.push(robot.joints[endeffector_joint]);
     }
     else {
-        
+
     }
     link = robot.joints[endeffector_joint].parent;
     joint = robot.links[link].parent;
@@ -99,8 +105,8 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
         //joint = robot.links[link].parent;
         angle = robot.joints[joint].angle;
         axis = robot.joints[joint].axis;
-        axis = vector_normalize(axis);
-        axis = [axis[0], axis[1], axis[2], 1];
+        // axis = vector_normalize(axis);
+        axis = [axis[0], axis[1], axis[2], 0];
         if(robot.links_geom_imported) {
             type = robot.joints[joint].type;
         }
@@ -108,49 +114,55 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
             type = 'continuous';
         }
         if (type === 'prismatic') {
-            v1 = matrix_multiply_vector(robot.joints[joint].xform,axis);
-            v2 = matrix_multiply_vector(robot.joints[joint].xform,[0,0,0,1]);
-            J0 = vector_sub(v1,v2);
-            J0 = [J0[0], J0[1], J0[2],0,0,0];
-            J0 = vector_normalize(J0);
+            var v1 = matrix_multiply_vector(robot.joints[joint].xform,axis);
+            var v2 = matrix_multiply_vector(robot.joints[joint].xform,[0,0,0,1]);
+            // J0 = vector_sub(v1,v2);
+            v1 = [v1[0], v1[1], v1[2]];
+            v1 = vector_normalize(v1);
+            J0 = v1;
+            var J0 = [J0[0], J0[1], J0[2],0,0,0];
+
             JT.push(J0);
+            joint_list.push(robot.joints[joint]);
         }
         else if (type === 'continuous' || type === 'revolute') {
-            v1 = matrix_multiply_vector(robot.joints[joint].xform,axis);
-            v2 = matrix_multiply_vector(robot.joints[joint].xform,[0,0,0,1]);
-            v3 = endeffector_world;
-            J1 = vector_sub(v1,v2);
-            J1 = vector_normalize(J1);
+            var v1 = matrix_multiply_vector(robot.joints[joint].xform,axis);
+            var v2 = matrix_multiply_vector(robot.joints[joint].xform,[0,0,0,1]);
+            var v3 = endeffector_world;
+            // J1 = vector_sub(v1,v2);
+            v1 = [v1[0], v1[1], v1[2]];
+            v1 = vector_normalize(v1);
             J2 = vector_sub(v3,v2);
-            J0 = vector_cross(J1,J2);   
-            J0 = [J0[0], J0[1], J0[2], J1[0], J1[1], J1[2] ];   
+            var J4 = vector_cross(v1,J2);
+            var J0 = [J4[0], J4[1], J4[2], v1[0], v1[1], v1[2] ];
             JT.push(J0);
+            joint_list.push(robot.joints[joint]);
         }
         else {
-            
+
         }
-    
+
         link = robot.joints[joint].parent;
         joint = robot.links[link].parent;
     }
-    
+
     angley = Math.asin(robot.joints[endeffector_joint].xform[0][2]);
     anglez = Math.asin(robot.joints[endeffector_joint].xform[0][1]/-1/Math.cos(angley));
     anglex = Math.asin(robot.joints[endeffector_joint].xform[1][2]/-1/Math.cos(angley));
     if (kineval.params.ik_orientation_included) {
         delta_x = [ endeffector_target_world.position[0] - endeffector_world[0] ,
-                endeffector_target_world.position[1] - endeffector_world[1] ,   
-                endeffector_target_world.position[2] - endeffector_world[2] ,   
+                endeffector_target_world.position[1] - endeffector_world[1] ,
+                endeffector_target_world.position[2] - endeffector_world[2] ,
                 endeffector_target_world.orientation[0] - anglex ,
-                endeffector_target_world.orientation[1] - angley ,   
+                endeffector_target_world.orientation[1] - angley ,
                 endeffector_target_world.orientation[2] - anglez   ];
     }
     else {
         delta_x = [ endeffector_target_world.position[0] - endeffector_world[0] ,
-                endeffector_target_world.position[1] - endeffector_world[1] ,   
-                endeffector_target_world.position[2] - endeffector_world[2] ,   
+                endeffector_target_world.position[1] - endeffector_world[1] ,
+                endeffector_target_world.position[2] - endeffector_world[2] ,
                 0 ,
-                0 ,   
+                0 ,
                 0 ];
     }
     if (kineval.params.ik_pseudoinverse) {
@@ -165,50 +177,55 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
     }
     // console.log(delta_theta);
     //     console.log(2);
-    if (robot.joints[endeffector_joint].type !== "fixed" ){
-        robot.joints[endeffector_joint].control = delta_theta[0];
-        var j=1;
-    }
-    else {
-        var j=0;
-    }
-    link = robot.joints[endeffector_joint].parent;
-    joint = robot.links[link].parent;
-    // console.log(joint);
-    //         console.log(j);
-    //         console.log("1");
-    while (typeof robot.joints[joint] !== "undefined") {
-        //joint = robot.links[link].parent;
-        if (type === 'prismatic') {
 
-            robot.joints[joint].control = delta_theta[j];
-            // console.log(joint);
-            // console.log(j);
-            // console.log("2");
-            j=j+1;
-        //     console.log(delta_theta);
-        // console.log(3);
-        }
-        else if (type === 'continuous' || type === 'revolute') {
-            
-            robot.joints[joint].control = delta_theta[j];
-            // console.log(joint);
-            // console.log(j);
-            // console.log("3");
-            j=j+1;
-        }
-        else {
-            
-        }
-        link = robot.joints[joint].parent;
-        joint = robot.links[link].parent;
-        // console.log(joint);
-        // console.log(j);
-        // console.log("4");
+    // if (robot.joints[endeffector_joint].type !== "fixed" ){
+    //     robot.joints[endeffector_joint].control = delta_theta[0];
+    //     var j=1;
+    // }
+    // else {
+    //     var j=0;
+    // }
+
+    for (var i = 0; i<joint_list.length; i++){
+        joint_list[i].control += delta_theta[i];
     }
+
+    // link = robot.joints[endeffector_joint].parent;
+    // joint = robot.links[link].parent;
+    // // console.log(joint);
+    // //         console.log(j);
+    // //         console.log("1");
+    // while (typeof robot.joints[joint] !== "undefined") {
+    //     //joint = robot.links[link].parent;
+    //     if (type === 'prismatic') {
+    //
+    //         robot.joints[joint].control = delta_theta[j];
+    //         // console.log(joint);
+    //         // console.log(j);
+    //         // console.log("2");
+    //         j=j+1;
+    //     //     console.log(delta_theta);
+    //     // console.log(3);
+    //     }
+    //     else if (type === 'continuous' || type === 'revolute') {
+    //
+    //         robot.joints[joint].control = delta_theta[j];
+    //         // console.log(joint);
+    //         // console.log(j);
+    //         // console.log("3");
+    //         j=j+1;
+    //     }
+    //     else {
+    //
+    //     }
+    //     link = robot.joints[joint].parent;
+    //     joint = robot.links[link].parent;
+    //     // console.log(joint);
+    //     // console.log(j);
+    //     // console.log("4");
+    // }
 
     // STENCIL: implement inverse kinematics iteration
     // Your code for a single IK iteration
     // output sets updated controls for each joint
 }
-

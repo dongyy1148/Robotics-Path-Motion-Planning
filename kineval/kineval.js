@@ -3,9 +3,9 @@
 
     KinEval | Kinematic Evaluator | core functions
 
-    Implementation of robot kinematics, control, decision making, and dynamics 
+    Implementation of robot kinematics, control, decision making, and dynamics
         in HTML5/JavaScript and threejs
-     
+
     @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
 
     Chad Jenkins
@@ -29,15 +29,15 @@ console.log("KinEval: Kinematic Evaluator 3");
 // function to initialize KinEval and start its animation loop
 kineval.start = function kinevalExecute() {
 
-    console.log(" **** >>> kineval.start"); 
+    console.log(" **** >>> kineval.start");
     // KinEval should not do anything until there is a robot and a world loaded
     var x;
-    for (x in robot.links) { 
+    for (x in robot.links) {
         if (typeof links_geom[x] === 'undefined') {
-            console.log("waiting for robot geometries to load"); 
+            console.log("waiting for robot geometries to load");
             //requestAnimationFrame(kineval.start);
             setTimeout(kineval.start,1000);
-            return; 
+            return;
         }
     }
     //if (typeof robotLoaded !== 'undefined')
@@ -49,7 +49,7 @@ kineval.start = function kinevalExecute() {
     // STUDENT: you should use my_init() instead
     kineval.init();
 
-    // KinEval uses animate() as the main animation loop maintained by threejs 
+    // KinEval uses animate() as the main animation loop maintained by threejs
     // STUDENT: you should use my_animate() instead
     kineval.animate();
 }
@@ -57,7 +57,7 @@ kineval.start = function kinevalExecute() {
 kineval.init = function init() {
 
     // initialize robot kinematics
-    kineval.initRobot();  
+    kineval.initRobot();
 
     // create kineval params object and set initial values
     kineval.initParameters();
@@ -70,7 +70,7 @@ kineval.init = function init() {
 
 
     // initialize rosbridge connection to robot running ROS, if available
-    // KE 2 : uncomment and add toggle 
+    // KE 2 : uncomment and add toggle
     //kineval.initrosbridge();
 
     // call user's initialization
@@ -104,7 +104,7 @@ kineval.robotDraw = function drawRobot() {
 
     // robot links
     for (x in robot.links) {
-   
+
         // KE : properly scope global variable robot_material
         if (kineval.params.display_wireframe)
             robot_material.wireframe = true;
@@ -143,7 +143,7 @@ kineval.robotDraw = function drawRobot() {
     if (robot.collision)
         robot.links[robot.collision].bbox_mesh.visible = true;
 
-    // toggled display of robot base axes 
+    // toggled display of robot base axes
     if (kineval.params.display_base_axes) {
             robot.links[robot.base].axis_geom_x.visible = true;
             robot.links[robot.base].axis_geom_y.visible = true;
@@ -173,9 +173,9 @@ kineval.robotDraw = function drawRobot() {
             robot.joints[x].axis_geom_y.visible = false;
             robot.joints[x].axis_geom_z.visible = false;
         }
- 
+
     }
-    
+
     // toggled display of joint with active control focus
     if (kineval.params.display_joints_active) {
         x = kineval.params.active_joint;
@@ -212,12 +212,12 @@ kineval.robotDraw = function drawRobot() {
                         generate_rotation_matrix_Y(kineval.params.ik_target.orientation[1]),
                         generate_rotation_matrix_Z(kineval.params.ik_target.orientation[2])
         ))));
-    else 
+    else
         var target_mat = matrix_2Darray_to_threejs(generate_translation_matrix(kineval.params.ik_target.position[0][0],kineval.params.ik_target.position[1][0],kineval.params.ik_target.position[2][0]));
     simpleApplyMatrix(target_geom,target_mat);
     } // hacked for stencil
 
-    if ((kineval.params.update_ik)||(kineval.params.persist_ik)) { 
+    if ((kineval.params.update_ik)||(kineval.params.persist_ik)) {
         endeffector_geom.visible = true;
         target_geom.visible = true;
     }
@@ -260,18 +260,18 @@ kineval.initInteraction = function initInteraction() {
 
 kineval.initParameters = function initParameters() {
 
-    // create params object 
+    // create params object
     kineval.params = {};
 
     kineval.params.just_starting = true;  // set to true as default, set false once starting forward kinematics project
 
-    // sets request for single update or persistent update of robot pose based on IK, setpoint controller, etc. 
+    // sets request for single update or persistent update of robot pose based on IK, setpoint controller, etc.
     kineval.params.update_pd = false;
     kineval.params.persist_pd = false;
-    kineval.params.update_pd_clock = false;      
-    kineval.params.update_pd_dance = false;      
-    kineval.params.update_ik = false;      
-    kineval.params.persist_ik = false;      
+    kineval.params.update_pd_clock = false;
+    kineval.params.update_pd_dance = false;
+    kineval.params.update_ik = false;
+    kineval.params.persist_ik = false;
     kineval.params.trial_ik_random = {};
     kineval.params.trial_ik_random.execute = false;
     kineval.params.trial_ik_random.start = 0;
@@ -304,20 +304,21 @@ kineval.initParameters = function initParameters() {
     kineval.params.dance_sequence_index = [0,1,2,3,4,5,6,7,8,9];
     if (robot.name === 'fetch') {  // fetch easter egg
         kineval.params.dance_sequence_index = [1,2,1,2,1,0,3,0,3,0];
-        kineval.setpoints = 
+        kineval.setpoints =
             [{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0.04,"l_gripper_finger_joint":0.04,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0.4,"shoulder_pan_joint":1.6056,"shoulder_lift_joint":-0.7112110832854187,"upperarm_roll_joint":-0.5224344562407175,"elbow_flex_joint":-0.2596467353995974,"forearm_roll_joint":0.027744058428229964,"wrist_flex_joint":-0.011999677661943124,"wrist_roll_joint":0.00012972717196553372,"gripper_axis":0.0001297271719655264,"head_pan_joint":0.00005720356139027753,"head_tilt_joint":0.00005283131465981046,"torso_fixed_joint":0.00012972717196555266,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0,"l_gripper_finger_joint":0,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0.4,"shoulder_pan_joint":0.34460326176810346,"shoulder_lift_joint":0.9958007666048422,"upperarm_roll_joint":-1.3788601366395654,"elbow_flex_joint":0.8938364230947411,"forearm_roll_joint":-0.10797832064349865,"wrist_flex_joint":0.6820807432085109,"wrist_roll_joint":0.0001297271719655064,"gripper_axis":0.00012972717196552277,"head_pan_joint":0.00005720356139027753,"head_tilt_joint":0.00005283131465981046,"torso_fixed_joint":0.00012972717196555266,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0.04,"l_gripper_finger_joint":0.04,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0.4,"shoulder_pan_joint":0.0004677854383942246,"shoulder_lift_joint":-1.221,"upperarm_roll_joint":-0.00037940857494373875,"elbow_flex_joint":0.00024155542149740568,"forearm_roll_joint":0.00001232914385335755,"wrist_flex_joint":0.00040145426866142973,"wrist_roll_joint":4.319780384106989e-8,"gripper_axis":4.319780384107232e-8,"head_pan_joint":1.904819311566239e-8,"head_tilt_joint":1.759228026605762e-8,"torso_fixed_joint":4.319780384108353e-8,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0,"l_gripper_finger_joint":0,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0.04,"l_gripper_finger_joint":0.04,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0,"l_gripper_finger_joint":0,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0.04,"l_gripper_finger_joint":0.04,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0,"l_gripper_finger_joint":0,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0.04,"l_gripper_finger_joint":0.04,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0},{"torso_lift_joint":0,"shoulder_pan_joint":0,"shoulder_lift_joint":0,"upperarm_roll_joint":0,"elbow_flex_joint":0,"forearm_roll_joint":0,"wrist_flex_joint":0,"wrist_roll_joint":0,"gripper_axis":0,"head_pan_joint":0,"head_tilt_joint":0,"torso_fixed_joint":0,"r_wheel_joint":0,"l_wheel_joint":0,"r_gripper_finger_joint":0,"l_gripper_finger_joint":0,"bellows_joint":0,"bellows_joint2":0,"estop_joint":0,"laser_joint":0}];
     }
 
     if (robot.name === 'baxter') { //dance
         kineval.params.dance_sequence_index = [0,1,2,3,4,5,6,7,8,9];
-        kineval.setpoints = 
+        kineval.setpoints =
             [{"torso_t0":0,"headpan":0,"headnod":0,"display_joint":0,"right_torso_arm_mount":0,"right_s0":0,"right_s1":0,"right_e0":0,"right_e1":0,"right_w0":0,"right_w1":0,"right_w2":0,"left_torso_arm_mount":0,"left_s0":0,"left_s1":0,"left_e0":0,"left_e1":0,"left_w0":0,"left_w1":0,"left_w2":0},{"torso_t0":0,"headpan":0.5400000000000004,"headnod":0,"display_joint":0,"right_torso_arm_mount":0,"right_s0":0,"right_s1":0,"right_e0":0,"right_e1":0,"right_w0":0,"right_w1":0,"right_w2":0,"left_torso_arm_mount":0,"left_s0":0,"left_s1":0,"left_e0":0,"left_e1":0,"left_w0":0,"left_w1":-1.57079632679,"left_w2":0.04000000000000003},{"torso_t0":3.2959735525250916e-179,"headpan":1e-323,"headnod":3.2959735525250916e-179,"display_joint":3.2959735525250916e-179,"right_torso_arm_mount":3.2959735525250916e-179,"right_s0":2e-323,"right_s1":-1.500000000000001,"right_e0":1e-323,"right_e1":2e-323,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":3.2959735525250916e-179,"left_s0":2e-323,"left_s1":-1.5400000000000011,"left_e0":1e-323,"left_e1":2e-323,"left_w0":1e-323,"left_w1":1.5e-323,"left_w2":1e-323},{"torso_t0":3.2959735525250916e-179,"headpan":1e-323,"headnod":3.2959735525250916e-179,"display_joint":3.2959735525250916e-179,"right_torso_arm_mount":3.2959735525250916e-179,"right_s0":2e-323,"right_s1":-1.500000000000001,"right_e0":1e-323,"right_e1":2.618,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":3.2959735525250916e-179,"left_s0":2e-323,"left_s1":-1.5400000000000011,"left_e0":1e-323,"left_e1":2e-323,"left_w0":1e-323,"left_w1":1.5e-323,"left_w2":1e-323},{"torso_t0":3.2959735525250916e-179,"headpan":1e-323,"headnod":3.2959735525250916e-179,"display_joint":3.2959735525250916e-179,"right_torso_arm_mount":3.2959735525250916e-179,"right_s0":2e-323,"right_s1":-1.500000000000001,"right_e0":1e-323,"right_e1":0.030000000000000006,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":3.2959735525250916e-179,"left_s0":2e-323,"left_s1":-1.5400000000000011,"left_e0":1e-323,"left_e1":2.618,"left_w0":1e-323,"left_w1":1.5e-323,"left_w2":1e-323},{"torso_t0":7.248274393241902e-200,"headpan":1e-323,"headnod":7.248274393241902e-200,"display_joint":7.248274393241902e-200,"right_torso_arm_mount":7.248274393241902e-200,"right_s0":2e-323,"right_s1":1.673246325197696e-68,"right_e0":1e-323,"right_e1":-3.346492650395391e-70,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":7.248274393241902e-200,"left_s0":2e-323,"left_s1":1.717866227202965e-68,"left_e0":1e-323,"left_e1":-2.726047306489636e-68,"left_w0":1e-323,"left_w1":1.5e-323,"left_w2":1e-323},{"torso_t0":7.248274393241902e-200,"headpan":1e-323,"headnod":7.248274393241902e-200,"display_joint":7.248274393241902e-200,"right_torso_arm_mount":0.2,"right_s0":-1.1600000000000008,"right_s1":0.020000000000000087,"right_e0":1e-323,"right_e1":-3.346492650395391e-70,"right_w0":1e-323,"right_w1":-1.460000000000001,"right_w2":1e-323,"left_torso_arm_mount":7.248274393241902e-200,"left_s0":0.9600000000000006,"left_s1":-0.039999999999999925,"left_e0":-0.04000000000000001,"left_e1":-0.010000000000000004,"left_w0":0.30000000000000004,"left_w1":-1.320000000000001,"left_w2":1e-323},{"torso_t0":7.248274393241902e-200,"headpan":1e-323,"headnod":7.248274393241902e-200,"display_joint":7.248274393241902e-200,"right_torso_arm_mount":0.16,"right_s0":0.8400000000000005,"right_s1":-1.6000000000000012,"right_e0":1e-323,"right_e1":-3.346492650395391e-70,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":7.248274393241902e-200,"left_s0":-0.8200000000000006,"left_s1":-1.6000000000000012,"left_e0":-0.04000000000000001,"left_e1":-0.010000000000000004,"left_w0":0.30000000000000004,"left_w1":0.04,"left_w2":1e-323},{"torso_t0":7.248274393241902e-200,"headpan":1e-323,"headnod":7.248274393241902e-200,"display_joint":7.248274393241902e-200,"right_torso_arm_mount":0.2,"right_s0":-1.1600000000000008,"right_s1":-1.6000000000000012,"right_e0":1e-323,"right_e1":-3.346492650395391e-70,"right_w0":1e-323,"right_w1":1.5e-323,"right_w2":1e-323,"left_torso_arm_mount":7.248274393241902e-200,"left_s0":0.9600000000000006,"left_s1":-1.6000000000000012,"left_e0":-0.04000000000000001,"left_e1":-0.010000000000000004,"left_w0":0.30000000000000004,"left_w1":0.04,"left_w2":1e-323},{"torso_t0":7.248274393241902e-200,"headpan":1e-323,"headnod":7.248274393241902e-200,"display_joint":7.248274393241902e-200,"right_torso_arm_mount":0.2,"right_s0":-1.1600000000000008,"right_s1":0.020000000000000087,"right_e0":1e-323,"right_e1":-3.346492650395391e-70,"right_w0":1e-323,"right_w1":-1.460000000000001,"right_w2":1e-323,"left_torso_arm_mount":7.248274393241902e-200,"left_s0":0.9600000000000006,"left_s1":-0.039999999999999925,"left_e0":-0.04000000000000001,"left_e1":-0.010000000000000004,"left_w0":0.30000000000000004,"left_w1":-1.320000000000001,"left_w2":1e-323}]
     }
 
-    // initialize inverse kinematics target location 
-    // KE 3 : ik_target param is redundant as an argument into inverseKinematics 
+    // initialize inverse kinematics target location
+    // KE 3 : ik_target param is redundant as an argument into inverseKinematics
     kineval.params.ik_target = {};
-    kineval.params.ik_target.position = [[0],[0.8],[1.0],[1]];
+    // 1.0 to 0.3
+    kineval.params.ik_target.position = [[0],[0.8],[0.3],[1]];
     kineval.params.ik_target.orientation = [Math.PI/6, Math.PI/4, 0];
     kineval.params.ik_orientation_included = false;
     kineval.params.ik_steplength = 0.1;
@@ -325,23 +326,23 @@ kineval.initParameters = function initParameters() {
 
     // initialize flags for executing planner
     kineval.params.generating_motion_plan = false; // monitor specifying state of motion plan generation
-    kineval.params.update_motion_plan = false; // sets request to generate motion plan 
+    kineval.params.update_motion_plan = false; // sets request to generate motion plan
     kineval.motion_plan = [];
     kineval.motion_plan_traversal_index = 0;
     kineval.params.update_motion_plan_traversal = false; // sets automatic traversal of previously generated motion plan
     kineval.params.persist_motion_plan_traversal = false; // sets automatic traversal of previously generated motion plan
     kineval.params.planner_state = "not invoked";
 
-    // toggle display of robot links, joints, and axes 
-    kineval.params.display_links = true; 
-    kineval.params.display_links_axes = false; 
-    kineval.params.display_base_axes = false; 
-    kineval.params.display_joints = false; 
-    kineval.params.display_joints_axes = false; 
+    // toggle display of robot links, joints, and axes
+    kineval.params.display_links = true;
+    kineval.params.display_links_axes = false;
+    kineval.params.display_base_axes = false;
+    kineval.params.display_joints = false;
+    kineval.params.display_joints_axes = false;
     kineval.params.display_collision_bboxes = false;
     kineval.params.display_wireframe = false;
-    kineval.params.display_joints_active = true; 
-    kineval.params.display_joints_active_axes = true; 
+    kineval.params.display_joints_active = true;
+    kineval.params.display_joints_active_axes = true;
 
     // apply environment floor with map texture-mapped onto ground plane
     kineval.params.map_filename = url_params.map_filename;
@@ -359,24 +360,24 @@ kineval.initScene = function initScene() {
     // instantiate threejs camera and set its position in the world
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
 
-    // KE 2 : make camera offset from robot vary with interaction, not constant 
+    // KE 2 : make camera offset from robot vary with interaction, not constant
     camera.position.y = 1;
     camera.position.z = 4;
 
-    var light1 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light1.position.set( 50, 50, 50 ); 
+    var light1 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light1.position.set( 50, 50, 50 );
     scene.add( light1 );
 
-    var light2 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light2.position.set( 50, 50, -50 ); 
+    var light2 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light2.position.set( 50, 50, -50 );
     scene.add( light2 );
 
-    var light3 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light3.position.set( -50, 50, -50 ); 
+    var light3 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light3.position.set( -50, 50, -50 );
     scene.add( light3 );
 
-    var light4 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light4.position.set( -50, 50, 50 ); 
+    var light4 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light4.position.set( -50, 50, 50 );
     scene.add( light4 );
 
     // instantiate threejs renderer and its dimensions
@@ -397,9 +398,9 @@ kineval.initScene = function initScene() {
     camera_controls.addEventListener( 'change', renderer );
 
     // create world floor
-    // KE T creates error : "TypeError: n.x is undefined" 
-    // THREE r62 var mapMaterial = new THREE.MeshBasicMaterial( { map: kineval.params.map_texture, transparent: true, opacity: 0.2 } ); 
-    var mapMaterial = new THREE.MeshBasicMaterial( { color: 0x00234c , transparent: true, opacity: 0.5 } ); 
+    // KE T creates error : "TypeError: n.x is undefined"
+    // THREE r62 var mapMaterial = new THREE.MeshBasicMaterial( { map: kineval.params.map_texture, transparent: true, opacity: 0.2 } );
+    var mapMaterial = new THREE.MeshBasicMaterial( { color: 0x00234c , transparent: true, opacity: 0.5 } );
     var mapGeometry = new THREE.PlaneGeometry(100, 100, 1, 1);
     map = new THREE.Mesh(mapGeometry, mapMaterial);
     map.doubleSided = true;
@@ -418,16 +419,16 @@ kineval.initScene = function initScene() {
     scene.add( gridHelper );
 
 /* experimental scene
-    var light_drake = new THREE.PointLight( 0xb05890, 0.4, 10, 0.1 ); 
-    light_drake.position.set( 0, 4, -5 ); 
+    var light_drake = new THREE.PointLight( 0xb05890, 0.4, 10, 0.1 );
+    light_drake.position.set( 0, 4, -5 );
     //scene.add( light_drake );
 
-    var light_drake2 = new THREE.PointLight( 0xb05890, 0.5, 10, 0.1 ); 
-    light_drake2.position.set( 2, 3, 0 ); 
+    var light_drake2 = new THREE.PointLight( 0xb05890, 0.5, 10, 0.1 );
+    light_drake2.position.set( 2, 3, 0 );
     //scene.add( light_drake2 );
 
-    //light_drake3 = new THREE.AmbientLight(0x301322); 
-    light_drake3 = new THREE.AmbientLight(0x602845); 
+    //light_drake3 = new THREE.AmbientLight(0x301322);
+    light_drake3 = new THREE.AmbientLight(0x602845);
     scene.add( light_drake3 );
 
     var geometry = new THREE.PlaneGeometry( 8, 20, 32 );
@@ -471,8 +472,8 @@ kineval.initScene = function initScene() {
     plane.material.opacity = 1;
     scene.add( plane );
 
-    var light_drake4 = new THREE.PointLight( 0xfffff, 1, 30, 0.1 ); 
-    light_drake4.position.set( 0, 2, -13 ); 
+    var light_drake4 = new THREE.PointLight( 0xfffff, 1, 30, 0.1 );
+    light_drake4.position.set( 0, 2, -13 );
     scene.add( light_drake4 );
 experimental scene */
 
@@ -500,7 +501,7 @@ experimental scene */
     kineval.initWorldPlanningScene();
 
     // KE T: move this out
-    //tempPointCloud(); 
+    //tempPointCloud();
     //tempGeometryLoading();
 }
 
@@ -603,15 +604,15 @@ kineval.initGUIDisplay = function initGUIDisplay () {
 
 kineval.initRobotLinksGeoms = function initRobotLinksGeoms() {
 
-    // KE T: initialize this variable properly 
-    robot.collision = false; 
+    // KE T: initialize this variable properly
+    robot.collision = false;
 
         // KE 2 : put robot_material into correct object (fixed below?)
         // KE ! : this may need to be moved back into link for loop
         robot_material = new THREE.MeshLambertMaterial( { color: 0x00234c, transparent: true, opacity: 0.9 } );
         //robot_material = new THREE.MeshLambertMaterial( { color: 0x00234c, transparent: true, opacity: 0.9, wireframe: true } );
 
-    // create a threejs mesh for link of the robot and add it to scene 
+    // create a threejs mesh for link of the robot and add it to scene
     for (x in robot.links) {
 
 
@@ -649,7 +650,7 @@ kineval.initRobotLinksGeoms = function initRobotLinksGeoms() {
             robot.links[x].bbox.max.z-robot.links[x].bbox.min.z
         );
         */
-       
+
         // (92) need to add bbox geometry directly
         var bbox_geom = new THREE.Geometry();
         bbox_geom.vertices = []; // for some reason, the allocation above populates the vertices array of the geometry with the dimensions of a bbox
@@ -679,7 +680,7 @@ kineval.initRobotLinksGeoms = function initRobotLinksGeoms() {
             new THREE.Face3(1,3,4)
         );
 
-     
+
         bbox_material = new THREE.MeshBasicMaterial( { color: 0xFF0000, wireframe:true, visible:true } );
 
         // KE 2 : move bbox_mesh to proper place within link object
@@ -730,8 +731,8 @@ kineval.initRobotJointsGeoms = function initRobotJointsGeoms() {
     // NOTE: simpleApplyMatrix can be used to set threejs transform for a rendered object
 
     var x,tempmat;
-       
-    // create threejs geometry for joint origin 
+
+    // create threejs geometry for joint origin
     material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
     invisible_geom = new THREE.CubeGeometry( 0.01, 0.01, 0.01 );
 
@@ -764,9 +765,9 @@ kineval.initRobotJointsGeoms = function initRobotJointsGeoms() {
         else
            var joint_geom = new THREE.CylinderGeometry( 0.2, 0.2, 0.2, 20, 3, false );  // cylinder axis aligns with along y-axis in object space
 
-        robot.joints[x].display_geom = new THREE.Mesh(joint_geom, joint_material); 
+        robot.joints[x].display_geom = new THREE.Mesh(joint_geom, joint_material);
 
-        // STENCIL: update vector_normalize for joint cylinder placement  
+        // STENCIL: update vector_normalize for joint cylinder placement
         // if joint axis not aligned with y-axis, rotate 3js cylinder axis to align with y
         if (typeof vector_cross !== 'undefined')
         if (!((robot.joints[x].axis[0] == 0) && (robot.joints[x].axis[2] == 0))) {
@@ -847,10 +848,10 @@ kineval.initWorldPlanningScene = function initWorldPlanningScene() {
     temp_mesh.position.y = 0;
     temp_mesh.position.z = (robot_boundary[1][2]+robot_boundary[0][2])/2;
     scene.add(temp_mesh);
- 
+
     // set rendering geometries of world obstacles
     var i;
-    for (i=0;i<robot_obstacles.length;i++) { 
+    for (i=0;i<robot_obstacles.length;i++) {
         temp_geom = new THREE.SphereGeometry(robot_obstacles[i].radius);
         temp_material = new THREE.MeshLambertMaterial( { color: 0xaf8c73, transparent: true, opacity: 0.6 } );
         //temp_material = new THREE.MeshLambertMaterial( { color: 0xaf8c73, transparent: true, opacity: 0.6 , wireframe: true} );
@@ -891,7 +892,7 @@ kineval.assignPoseSetpoint = function assign_pose_setpoint (pose_id) {
 /////     FILE LOADING FUNCTIONS
 //////////////////////////////////////////////////
 
-kineval.loadJSFile = function loadJSFile(filename,kineval_object) { 
+kineval.loadJSFile = function loadJSFile(filename,kineval_object) {
 
 // load JavaScript file dynamically from filename, and (optionally) assign to recognized field of kineval object
 // WARNING: execution of the kineval main loop must wait until the specified file is loaded.  For the browser, this is accomplished by having kineval.start() called within the window.onload() function of the executing HTML document
@@ -938,9 +939,9 @@ function tempPointCloud() {
         pcloud_material[i] = new THREE.ParticleBasicMaterial({
             color: colortmp,
             size: 0.020
-        }); 
+        });
         */
-        pcloud_material[i] = new THREE.PointsMaterial({ color: colortmp, size: 0.020 }); 
+        pcloud_material[i] = new THREE.PointsMaterial({ color: colortmp, size: 0.020 });
     }
 
     //pcloud_geom.vertices = pointcloud;
@@ -958,7 +959,7 @@ function tempPointCloud() {
 
     //for (i=0;i<pointcloud.length;i+=10) {
     for (i=0;i<pointcloud.length;i++) {
-        if (0==1) { // apply transform 
+        if (0==1) { // apply transform
         particletmp = new THREE.Vector3(
             pointcloud[i][0]-mean[0],
             pointcloud[i][1]-mean[1],
@@ -968,7 +969,7 @@ function tempPointCloud() {
             0*particletmp.x+Math.cos(angle)*particletmp.y+-1*Math.sin(angle)*particletmp.z+0.5,
             0*particletmp.x+Math.sin(angle)*particletmp.y+Math.cos(angle)*particletmp.z+0
             );
-        } 
+        }
         particle = new THREE.Vector3(
             pointcloud[i][0],
             pointcloud[i][1],
@@ -990,9 +991,9 @@ function tempPointCloud() {
 
 /* normal computation
     chosenidx = 40000;
-  for (chosenidx=40000;chosenidx<40500;chosenidx+=20) { 
-  //for (chosenidx=500;chosenidx<pointcloud.length;chosenidx+=20000) { 
-  //for (chosenidx=40000;chosenidx<41100;chosenidx+=1000) { 
+  for (chosenidx=40000;chosenidx<40500;chosenidx+=20) {
+  //for (chosenidx=500;chosenidx<pointcloud.length;chosenidx+=20000) {
+  //for (chosenidx=40000;chosenidx<41100;chosenidx+=1000) {
     pcloud_point_centered = [];
     pcloud_point_weights = [];
     pcloud_point_weighted = [];
@@ -1011,7 +1012,7 @@ function tempPointCloud() {
         pcloud_point_weighted[i][1] = pcloud_point_weights[i]*pcloud_point_centered[i][1];
         pcloud_point_weighted[i][2] = pcloud_point_weights[i]*pcloud_point_centered[i][2];
     }
-    console.log(chosenidx+" "+sum_weight); 
+    console.log(chosenidx+" "+sum_weight);
     pcloud_point_centered_transpose = numeric.transpose(pcloud_point_centered);
     //cov = numeric.div(numeric.dot(pcloud_point_centered_transpose,numeric.dot(numeric.diag(pcloud_point_weighted),pointcloud))/(pointcloud.length-1));
     cov = numeric.div(numeric.dot(pcloud_point_centered_transpose,pcloud_point_weighted),pointcloud.length-1);
@@ -1041,5 +1042,3 @@ function tempPointCloud() {
   } // chosenidx
 */  // normal computation
 }
-
-

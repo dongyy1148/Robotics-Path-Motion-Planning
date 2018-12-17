@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////
-/////     MATRIX ALGEBRA AND GEOMETRIC TRANSFORMS 
+/////     MATRIX ALGEBRA AND GEOMETRIC TRANSFORMS
 //////////////////////////////////////////////////
 
 function matrix_copy(m1) {
@@ -29,20 +29,20 @@ function matrix_multiply(m1,m2) {
                 mat[i][j]=0;
                 for (m=0;m<m2.length;m++){
                     mat[i][j] += m1[i][m]*m2[m][j];
-                }             
+                }
             }
         }
     return mat;
     }
-    
+
     else{
         return "false"
     }
-    
+
 }
 
 function matrix_transpose(m1) {
-   
+
 
     var mat = [];
     var i,j;
@@ -57,7 +57,7 @@ function matrix_transpose(m1) {
 }
 
 function matrix_pseudoinverse(m1) {
- 
+
 
     var mat = [];
     var i,j;
@@ -80,11 +80,11 @@ function matrix_pseudoinverse(m1) {
         m1_right=matrix_multiply(m1_t,m1_1);
         return m1_right;
     }
-    
+
 }
 
 function matrix_invert_affine(t) {
-    
+
 
     var mat = [];
     var i,j;
@@ -99,7 +99,7 @@ function matrix_invert_affine(t) {
 }
 
 function vector_normalize(v1) {
-   
+
 
     var v = [];
     var sum = 0;
@@ -115,34 +115,42 @@ function vector_normalize(v1) {
     return v;
 }
 
-function vector_cross(v1,v2) {
-    
-    var v = [];
-    var mat = [];
-    var v3=[];
-    var i,j;
+// function vector_cross(v1,v2) {
+//
+//     var v = [];
+//     var mat = [];
+//     var v3=[];
+//     var i,j;
+//
+//     for (i=0;i<3;i++) {
+//         mat[i] = [];
+//         v3[i] = v2[i];
+//         for (j=0;j<3;j++) {
+//             mat[i][j] = 0;
+//         }
+//     }
+//     mat[0][1] = -v1[2];
+//     mat[0][2] = v1[1];
+//     mat[1][0] = v1[2];
+//     mat[1][2] = -v1[0];
+//     mat[2][0] = -v1[1];
+//     mat[2][1] = v1[0];
+//     v = matrix_multiply_vector(mat,v3);
+//     return v;
+// }
 
-    for (i=0;i<3;i++) {
-        mat[i] = [];
-        v3[i] = v2[i];
-        for (j=0;j<3;j++) {
-            mat[i][j] = 0;
-        }
-    }
-    mat[0][1] = -v1[2];
-    mat[0][2] = v1[1];
-    mat[1][0] = v1[2];
-    mat[1][2] = -v1[0];
-    mat[2][0] = -v1[1];
-    mat[2][1] = v1[0];
-    v = matrix_multiply_vector(mat,v3);
+function vector_cross(v1, v2){
+    var v = [];
+    v[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    v[1] = v1[2]*v2[0] - v1[0]*v2[2];
+    v[2] = v1[0]*v2[1] - v1[1]*v2[0];
     return v;
 }
 
 function generate_identity(x) {
     var mat = [];
     var i,j;
-    for (i=0;i<x;i++) { 
+    for (i=0;i<x;i++) {
         mat[i]=[];
         for (j=0;j<x;j++){
             if (i===j){
@@ -150,7 +158,7 @@ function generate_identity(x) {
             }
             else {
                 mat[i][j]=0;
-            } 
+            }
         }
     }
     return mat;
@@ -208,10 +216,10 @@ function generate_rotation_matrix_Z(x) {
         var i,m;
         if (m1[0].length === m2.length){
             for (i=0;i<m1.length;i++) { // for each row of m1
-                mat[i] = 0;               
+                mat[i] = 0;
                 for (m=0;m<m2.length;m++){
                     mat[i] += m1[i][m]*m2[m];
-                }             
+                }
             }
         return mat;
         }
@@ -233,4 +241,3 @@ function generate_rotation_matrix_Z(x) {
             return "false"
         }
     }
-    

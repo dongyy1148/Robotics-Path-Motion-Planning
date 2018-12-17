@@ -3,10 +3,10 @@
 ||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/
 /||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\
 
-    Pendularm 1 simulation 
-        
+    Pendularm 1 simulation
+
     Simple 1 DOF pendulum dynamics and control in HTML5/JavaScript and threejs
-    
+
     @author ohseejay / https://github.com/ohseejay
                      / https://bitbucket.org/ohseejay
 
@@ -14,7 +14,7 @@
     Laboratory for Perception RObotics and Grounded REasoning Systems
     University of Michigan
 
-    License: Michigan Honor License 
+    License: Michigan Honor License
 
 |\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/|
 ||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/||\/
@@ -48,7 +48,7 @@
 // initialize threejs scene, user input, and robot kinematics
 init();
 
-// main animation loop maintained by threejs 
+// main animation loop maintained by threejs
 animate();
 
 
@@ -75,10 +75,10 @@ function init() {
     // initialize pendulum PID servo gains
     pendulum.servo = {kp:0, kd:0, ki:0};  // no control
 
-    // initialize time and set timestep 
+    // initialize time and set timestep
     t = 0;
     dt = 0.05;  // default
- 
+
     // initialize method of numerical integration of dynamics
     //numerical_integrator = "euler";
     //numerical_integrator = "verlet";
@@ -97,7 +97,7 @@ function init() {
     derivative_error = [];
     anglebefore = [];
     k1=[]; k2=[]; k3=[]; k4=[];
-    kx2=[]; kx3=[]; kx4=[]; 
+    kx2=[]; kx3=[]; kx4=[];
 
     document.addEventListener('keydown', function(e) {
         if (e.keyCode == 88)  // 'x' == 88
@@ -106,7 +106,8 @@ function init() {
 
     // initialize rendering scene and user interface
     createScene();
-
+    count = 0;
+    random = false;
 }
 
 
@@ -134,12 +135,15 @@ function animate() {
     if (keyboard.pressed("4"))
         numerical_integrator = "runge-kutta";
 
-    // update servo desired state from user interaction 
+    // update servo desired state from user interaction
     if ( keyboard.pressed("e") )
         pendulum.desired += 0.05; // move the desired angle for the servo
     if ( keyboard.pressed("q") )
         pendulum.desired += -0.05; // move the desired angle for the servo
 
+    // random setpoint
+    if ( keyboard.pressed("r") )
+        random = !random; // move the desired angle for the servo
 
     // add user force from user interaction
     if ( keyboard.pressed("d") )
@@ -151,7 +155,7 @@ function animate() {
     pendulum.servo.kp = 70;
     pendulum.servo.kd = 25;
     pendulum.servo.ki = 6;
-    error = pendulum.desired - pendulum.angle;  
+    error = pendulum.desired - pendulum.angle;
     if(!accumulated_error){
         error_previous = error;
     }
@@ -160,11 +164,17 @@ function animate() {
     pendulum.control = pendulum.servo.kp*error+pendulum.servo.kd*derivative_error+pendulum.servo.ki*accumulated_error;
     error_previous = error;
 
+    if (servo_active_persist&&error<0.01&&random){
+        pendulum.desired += 2*Math.PI * Math.random()-Math.PI;
+        accumulated_error = 0;
+        count += 1;
+    }
+
     // toggle activation of servo controller from user interaction
     if (keyboard.pressed("c"))
         servo_active_persist = !servo_active_persist;
 
-    // disable motor from user interaction 
+    // disable motor from user interaction
     if (keyboard.pressed("s")||!servo_active_persist) {
         pendulum.control = 0;
         accumulated_error = 0;
@@ -204,7 +214,7 @@ function animate() {
         pendulum.angle_dot+=(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+pendulum_acceleration(pendulum.control,pendulum.angle))/2*dt;
     }
     else if (numerical_integrator === "runge-kutta") {
-    
+
     // STENCIL: Runge-Kutta 4 integrator
         pendulum.angle_previous=pendulum.angle;
         k1=pendulum.angle_dot;
@@ -216,7 +226,7 @@ function animate() {
         k4=k1+dt*pendulum_acceleration(pendulum.control,kx3);
         pendulum.angle=pendulum.angle_previous+1/6*dt*(k1+2*k2+2*k3+k4);
         pendulum.angle_dot+=1/6*dt*(pendulum_acceleration(pendulum.control,pendulum.angle_previous)+2*pendulum_acceleration(pendulum.control,kx2)+2*pendulum_acceleration(pendulum.control,kx3)+pendulum_acceleration(pendulum.control,kx4))
-    } 
+    }
     else {
         pendulum.angle_previous = pendulum.angle;
         pendulum.angle = (pendulum.angle+Math.PI/180)%(2*Math.PI);
@@ -230,24 +240,24 @@ function animate() {
     // advance time
     t = t + dt;
 
-    textbar.innerHTML = 
+    textbar.innerHTML =
         "System <br> " +
-        " t = " + t.toFixed(2) + 
-        " dt = " + dt.toFixed(2) + 
+        " t = " + t.toFixed(2) +
+        " dt = " + dt.toFixed(2) +
         "<br>" +
-        " integrator = " + numerical_integrator + 
+        " integrator = " + numerical_integrator +
         "<br>" +
-        " x = " + pendulum.angle.toFixed(2) + 
+        " x = " + pendulum.angle.toFixed(2) +
         "<br>" +
-        " x_dot = " + pendulum.angle_dot.toFixed(2) + 
+        " x_dot = " + pendulum.angle_dot.toFixed(2) +
         "<br>" +
-        " x_desired = " + pendulum.desired.toFixed(2) + 
+        " x_desired = " + pendulum.desired.toFixed(2) +
         "<br><br> Servo: " + servo_active_state + " <br> " +
         " u = " + pendulum.control.toFixed(2) +
         "<br>" +
-        " kp = " + pendulum.servo.kp.toFixed(2) + 
+        " kp = " + pendulum.servo.kp.toFixed(2) +
         "<br>" +
-        " kd = " + pendulum.servo.kd.toFixed(2) + 
+        " kd = " + pendulum.servo.kd.toFixed(2) +
         "<br>" +
         " ki = " + pendulum.servo.ki.toFixed(2) +
         "<br><br>  Pendulum <br> " +
@@ -265,7 +275,11 @@ function animate() {
         "<br>" +
         " c|x - toggle servo " +
         "<br>" +
-        " s - disable servo "
+        " s - disable servo " +
+        "<br>" +
+        " random point state = " + random +
+        "<br>" +
+        " reached targets = " + count.toFixed(2)
 
     ;
 
@@ -275,7 +289,7 @@ function animate() {
 }
 
 function pendulum_acceleration(torque,theta) {
-    // STENCIL: return acceleration(s) system equation(s) of motion 
+    // STENCIL: return acceleration(s) system equation(s) of motion
     a=-gravity/pendulum.length*Math.sin(theta)+torque/(pendulum.mass*Math.pow(pendulum.length,2));
     return a
 }
@@ -290,20 +304,20 @@ function createScene() {
     camera.position.y = 1;
     camera.position.z = 4;
 
-    var light1 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light1.position.set( 10, 10, 10 ); 
+    var light1 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light1.position.set( 10, 10, 10 );
     scene.add( light1 );
 
-    var light2 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light2.position.set( 10, -10, 10 ); 
+    var light2 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light2.position.set( 10, -10, 10 );
     scene.add( light2 );
 
-    var light3 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light3.position.set( -10, -10, 10 ); 
+    var light3 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light3.position.set( -10, -10, 10 );
     scene.add( light3 );
 
-    var light4 = new THREE.PointLight( 0xffffff, 0.3, 1000 ); 
-    light4.position.set( -10, 10, 10 ); 
+    var light4 = new THREE.PointLight( 0xffffff, 0.3, 1000 );
+    light4.position.set( -10, 10, 10 );
     scene.add( light4 );
 
     // instantiate threejs renderer and its dimensions
@@ -400,5 +414,3 @@ function createScene() {
 </script>
 </body>
 </html>
-
-
