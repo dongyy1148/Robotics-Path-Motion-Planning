@@ -102,6 +102,12 @@ kineval.animate = function animate() {
 
 kineval.robotDraw = function drawRobot() {
 
+
+    // var A = [[1,2,3,4],[10,15,7,9],[5,16,12,11],[8,14,6,13]];
+    // // var b = [5,6,7,8];
+    // var c = matrix_inverse(A);
+    // console.log(c);
+
     // robot links
     for (x in robot.links) {
 

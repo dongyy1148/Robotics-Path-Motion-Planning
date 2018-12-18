@@ -241,3 +241,120 @@ function generate_rotation_matrix_Z(x) {
             return "false"
         }
     }
+
+    function LU(A) {  
+        var n = A.length; 
+        var L = generate_identity(n); 
+        var P = [];
+        for (var i = 0; i<n; i++){
+            P[i] = i;
+        }
+        var U = generate_identity(n);
+        for (var i = 0; i < n; i++){
+            var max = Math.abs(U[i][i]);
+            var row = i;
+            //  Find the maximun value in a column in order to change lines
+            for (var k = i+1; k<n; k++){
+                if (Math.abs(U[k][i]) > max){
+                    max = Math.abs(U[k][i]);
+                    row = k;
+                }
+            }
+            if (max == 0){
+                return "false";
+            }
+
+            var tmp = P[i];
+            P[i] = P[row];
+            P[row]=tmp;
+
+            // Swap the rows pivoting the maxRow, i is the current row
+            for (var k = i; k<n; k++){
+                var temp = A[row][k];
+                A[row][k] = A[i][k];
+                A[i][k] = temp;
+            }
+            var u =A[i][i];
+            // Subtract lines
+            for (var j = i+1; j<n; j++){
+                var l = A[j][i]/u;
+                A[j][i] = l;
+                for (var k = i+1; k<n; k++){
+                    A[j][k] = A[j][k] - A[i][k]*l;
+                }
+            }
+            // Make the rows bellow this one zero in the current column
+            for (var k = i+1; k<n; k++){
+                U[k][i] = 0;
+            }
+
+        }
+
+
+        for (var i=0 ; i<n ;i++){
+            for (var j=0; j<i+1; j++){
+                if (i !== j){
+                    L[i][j]=A[i][j];
+                }
+                else{
+                    L[i][j]=1;
+                }
+            }
+            for (var k=i; k<n; k++) {
+                U[i][k]=A[i][k];
+            }
+105     }
+
+        return [L, U, P];
+    }
+
+    function matrix_inverse(A){
+        var A2 = [];
+        var n = A.length;
+        var I = generate_identity(n);
+        var A_inv = generate_identity(n);
+        for (var i=0; i<n; i++){
+            A2 = matrix_copy(A);
+            var b = [];
+            for (var j = 0; j<n; j++){
+                b[j] = I[j][i];                
+            }
+            var c = linear_solve(A2,b);
+            for (var m = 0; m<n; m++){
+                A_inv[m][i] = c[m];
+            }
+        }
+        return A_inv;
+    }
+
+    function linear_solve(A,b){
+        var y =[];
+        var A2 = matrix_copy(A);
+        var result = LU(A2);
+        var L = result[0];
+        var U = result[1];
+        var P = result[2];
+        var n = L.length;
+        for (var i = 0; i < n; i++)  {
+            y[i] = b[P[i]];
+            for(var j = 0; j < i; j++){
+                y[i] = y[i] - L[i][j]*y[j];
+            }
+        }
+        var x =[];
+        for (var i = n-1; i > -1; i--)        {
+            x[i] = y[i];
+            for (var j = n-1; j > i; j--){
+                x[i] = x[i] - U[i][j]*x[j];
+            }
+            x[i] = x[i] / U[i][i];
+        }
+        return x;
+    }
+
+    
+
+    // A = [[1,2,3,4],[10,15,7,9],[5,16,12,11],[8,14,6,13]];
+    // b = [5,6,7,8];
+    // c = linear_solve(A,b);
+    
